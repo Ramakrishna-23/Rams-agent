@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resource Agent Saver</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Resource Agent Saver</h1>
+    </header>
+
+    <section class="page-info">
+      <label class="field-label">Page Title</label>
+      <p id="pageTitle" class="page-title">Loading...</p>
+
+      <label class="field-label">URL</label>
+      <p id="pageUrl" class="page-url">Loading...</p>
+
+      <div id="selectedTextSection" class="selected-text-section hidden">
+        <label class="field-label">Selected Text</label>
+        <p id="selectedText" class="selected-text"></p>
+      </div>
+    </section>
+
+    <section class="notes-section">
+      <label class="field-label" for="notes">Notes (optional)</label>
+      <textarea
+        id="notes"
+        placeholder="Add any notes about this resource..."
+        rows="3"
+      ></textarea>
+    </section>
+
+    <button id="saveBtn" class="save-btn" disabled>Save Resource</button>
+
+    <div id="status" class="status hidden"></div>
+
+    <footer>
+      <a id="optionsLink" href="#">Settings</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
