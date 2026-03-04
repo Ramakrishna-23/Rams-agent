@@ -1,6 +1,6 @@
-# Rams Agent — GCP Deployment Guide
+# Rams Agent — Railway Deployment Guide
 
-Deploy the full Rams Agent stack (FastAPI backend, Next.js frontend, Chrome extension) to Google Cloud Platform using Cloud Run, Cloud SQL, and Neo4j AuraDB.
+Deploy the full Rams Agent stack (FastAPI backend, Next.js frontend, Chrome extension) to Railway with Cloudflare DNS/CDN, Railway PostgreSQL, and Neo4j AuraDB.
 
 ---
 
@@ -9,56 +9,38 @@ Deploy the full Rams Agent stack (FastAPI backend, Next.js frontend, Chrome exte
 1. [Architecture](#architecture)
 2. [Prerequisites](#prerequisites)
 3. [Cost Estimate](#cost-estimate)
-4. [Phase 1: GCP Project Setup](#phase-1-gcp-project-setup)
-5. [Phase 2: Cloud SQL + pgvector](#phase-2-cloud-sql--pgvector)
-6. [Phase 3: Secret Manager](#phase-3-secret-manager)
+4. [Phase 1: Railway Project Setup](#phase-1-railway-project-setup)
+5. [Phase 2: PostgreSQL with pgvector](#phase-2-postgresql-with-pgvector)
+6. [Phase 3: Neo4j AuraDB](#phase-3-neo4j-auradb)
 7. [Phase 4: Deploy Backend](#phase-4-deploy-backend)
-8. [Phase 5: Database Migrations](#phase-5-database-migrations)
-9. [Phase 6: Deploy Frontend](#phase-6-deploy-frontend)
-10. [Phase 7: Custom Domains](#phase-7-custom-domains)
-11. [Phase 8: DNS Configuration](#phase-8-dns-configuration)
-12. [Chrome Extension Setup](#chrome-extension-setup)
-13. [CI/CD with GitHub Actions](#cicd-with-github-actions)
-14. [Automated Deployment Script](#automated-deployment-script)
-15. [Verification Checklist](#verification-checklist)
-16. [Troubleshooting](#troubleshooting)
-17. [Updating & Redeploying](#updating--redeploying)
+8. [Phase 5: Deploy Frontend](#phase-5-deploy-frontend)
+9. [Phase 6: Cloudflare DNS Setup](#phase-6-cloudflare-dns-setup)
+10. [Phase 7: S3 / Object Storage](#phase-7-s3--object-storage)
+11. [Chrome Extension Setup](#chrome-extension-setup)
+12. [CI/CD](#cicd)
+13. [Verification Checklist](#verification-checklist)
+14. [Troubleshooting](#troubleshooting)
+15. [Updating & Redeploying](#updating--redeploying)
 
 ---
 
 ## Architecture
 
 ```
-                    ┌─────────────────────────────────────┐
-                    │          rambuilds.dev (DNS)         │
-                    │  rams.rambuilds.dev → Frontend       │
-                    │  api.rams.rambuilds.dev → Backend    │
-                    └──────┬──────────────┬───────────────┘
-                           │              │
-                    ┌──────▼──────┐ ┌─────▼──────┐
-                    │  Cloud Run  │ │  Cloud Run  │
-                    │  Frontend   │ │  Backend    │
-                    │  (Next.js)  │ │  (FastAPI)  │
-                    │  port 3000  │ │  port 8000  │
-                    │  256Mi/1CPU │ │  512Mi/1CPU │
-                    │  0-2 inst.  │ │  0-3 inst.  │
-                    └─────────────┘ └──┬─────┬───┘
-                                       │     │
-                              ┌────────▼┐  ┌─▼──────────┐
-                              │Cloud SQL│  │Neo4j AuraDB│
-                              │Postgres │  │  (optional) │
-                              │+pgvector│  │  Knowledge  │
-                              │ f1-micro│  │    Graph    │
-                              └─────────┘  └─────────────┘
+         Cloudflare (Free DNS/CDN)
+  rams.rambuilds.dev  -->  Railway Frontend (Next.js :3000)
+  api.rams.rambuilds.dev  -->  Railway Backend (FastAPI :8000)
+                                    |           |
+                              Railway Postgres   Neo4j AuraDB
+                              (pgvector)         (Free Tier)
 
     ┌──────────────────┐
     │ Chrome Extension │──── HTTPS ────► api.rams.rambuilds.dev
     │ (extension-v2)   │
     └──────────────────┘
 
-    Secrets: GCP Secret Manager
-    Images:  Artifact Registry (us-central1-docker.pkg.dev)
-    CI/CD:   GitHub Actions + Workload Identity Federation
+    CI: GitHub Actions (lint + typecheck only)
+    CD: Railway auto-deploy on push to main
 ```
 
 ---
@@ -67,12 +49,12 @@ Deploy the full Rams Agent stack (FastAPI backend, Next.js frontend, Chrome exte
 
 | Requirement | Details |
 |---|---|
-| **GCP Account** | With billing enabled |
-| **gcloud CLI** | [Install](https://cloud.google.com/sdk/docs/install), then `gcloud auth login` |
-| **Docker** | Needed for frontend build (build args for `NEXT_PUBLIC_*`) |
+| **Railway Account** | Hobby Plan ($5/month + usage) at [railway.app](https://railway.app) |
+| **Railway CLI** | `npm i -g @railway/cli && railway login` |
 | **Domain** | `rambuilds.dev` (or your own) with DNS access |
+| **Cloudflare Account** | Free tier at [cloudflare.com](https://cloudflare.com) |
 | **API Keys** | Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) |
-| **Neo4j AuraDB** | (Optional) Free tier at [Neo4j Aura](https://neo4j.com/cloud/aura-free/) |
+| **Neo4j AuraDB** | Free tier at [console.neo4j.io](https://console.neo4j.io) |
 | **Node.js 20+** | For Chrome extension build |
 | **pnpm** | For frontend (`corepack enable`) |
 
@@ -80,539 +62,252 @@ Deploy the full Rams Agent stack (FastAPI backend, Next.js frontend, Chrome exte
 
 ## Cost Estimate
 
-Running with minimum instances set to 0 (scale-to-zero):
-
-| Service | Spec | Est. Monthly Cost |
-|---|---|---|
-| Cloud Run — Backend | 512Mi / 1 vCPU, 0-3 instances | $0–5 |
-| Cloud Run — Frontend | 256Mi / 1 vCPU, 0-2 instances | $0–3 |
-| Cloud SQL — PostgreSQL | `db-f1-micro`, 10GB HDD | ~$8 |
-| Artifact Registry | Container storage | ~$1 |
-| Secret Manager | 5-7 secrets | < $0.10 |
-| Neo4j AuraDB | Free tier | $0 |
-| **Total** | | **~$8–18/month** |
-
-> Cloud Run's free tier includes 2M requests/month and 360k vCPU-seconds. Light personal use may stay within free tier for compute.
+| Service | Est. Monthly Cost |
+|---|---|
+| Railway Hobby Plan | $5 base |
+| Backend compute | $2-5 |
+| Frontend compute | $1-3 |
+| PostgreSQL | $1-3 |
+| Neo4j AuraDB | $0 (free tier) |
+| Cloudflare | $0 (free tier) |
+| **Total** | **~$9-16/month** |
 
 ---
 
-## Phase 1: GCP Project Setup
+## Phase 1: Railway Project Setup
 
-### 1.1 Set your project
-
-```bash
-export GCP_PROJECT_ID="your-gcp-project-id"
-export GCP_REGION="us-central1"
-
-gcloud config set project "$GCP_PROJECT_ID"
-```
-
-### 1.2 Enable required APIs
+1. Create a Railway account and subscribe to the **Hobby Plan** ($5/month + usage)
+2. Create a new project named `rams-agent`
+3. Install the Railway CLI:
 
 ```bash
-gcloud services enable \
-  run.googleapis.com \
-  sqladmin.googleapis.com \
-  artifactregistry.googleapis.com \
-  secretmanager.googleapis.com \
-  cloudbuild.googleapis.com
-```
-
-### 1.3 Create Artifact Registry repository
-
-```bash
-gcloud artifacts repositories create rams-agent \
-  --repository-format=docker \
-  --location="$GCP_REGION" \
-  --description="Rams Agent container images"
-```
-
-### 1.4 Configure Docker authentication
-
-```bash
-gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+npm i -g @railway/cli
+railway login
+railway link  # select your rams-agent project
 ```
 
 ---
 
-## Phase 2: Cloud SQL + pgvector
+## Phase 2: PostgreSQL with pgvector
 
-### 2.1 Create the instance
+Railway's PostgreSQL 16 plugin includes pgvector out of the box.
 
-This takes ~5 minutes:
+### 2.1 Add PostgreSQL plugin
 
-```bash
-gcloud sql instances create rams-db \
-  --database-version=POSTGRES_16 \
-  --tier=db-f1-micro \
-  --region="$GCP_REGION" \
-  --storage-size=10GB \
-  --storage-type=HDD \
-  --no-assign-ip \
-  --enable-google-private-path
-```
+In the Railway dashboard, click **+ New** → **Database** → **PostgreSQL**. Name it `rams-postgres`.
 
-> `--no-assign-ip` means no public IP — Cloud Run connects via the Cloud SQL Auth Proxy over a Unix socket, which is more secure.
+### 2.2 Enable pgvector
 
-### 2.2 Set the postgres password
+Connect to the database and enable the extension:
 
 ```bash
-gcloud sql users set-password postgres \
-  --instance=rams-db \
-  --password="YOUR_SECURE_PASSWORD"
+railway connect postgres
 ```
-
-### 2.3 Create the database
-
-```bash
-gcloud sql databases create resources_db --instance=rams-db
-```
-
-### 2.4 Enable the pgvector extension
-
-Connect to the instance:
-
-```bash
-gcloud sql connect rams-db --user=postgres --database=resources_db
-```
-
-Then run:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 \q
 ```
 
-### 2.5 Note the connection name
+### 2.3 Database URL
 
-```bash
-gcloud sql instances describe rams-db --format='value(connectionName)'
-# Output: your-project:us-central1:rams-db
+The backend `DATABASE_URL` should use Railway variable references. Set this on the backend service:
+
 ```
-
-Save this — you'll need it for the database URL.
+postgresql+asyncpg://${{rams-postgres.PGUSER}}:${{rams-postgres.PGPASSWORD}}@${{rams-postgres.PGHOST}}:${{rams-postgres.PGPORT}}/${{rams-postgres.PGDATABASE}}
+```
 
 ---
 
-## Phase 3: Secret Manager
+## Phase 3: Neo4j AuraDB
 
-The backend reads secrets as environment variables. Cloud Run injects them from Secret Manager at runtime.
+### Why AuraDB Free
 
-### 3.1 Required secrets
+- Zero cost, fully managed
+- 200K nodes / 400K relationships (plenty for personal use)
+- Pauses after 3 days idle — the backend code handles this gracefully (try/except in `rag.py`)
 
-| Secret Name | Value |
-|---|---|
-| `gemini-api-key` | Your Gemini API key |
-| `api-key` | A strong random string for backend auth (used by frontend + extension) |
-| `database-url` | `postgresql+asyncpg://postgres:PASSWORD@/resources_db?host=/cloudsql/PROJECT:REGION:rams-db` |
-| `neo4j-uri` | (Optional) `neo4j+s://xxxx.databases.neo4j.io` |
-| `neo4j-password` | (Optional) Neo4j AuraDB password |
+### Setup
 
-### 3.2 Create secrets
-
-```bash
-# Generate a strong API key
-API_KEY=$(openssl rand -base64 32)
-echo "Your API key: $API_KEY"
-
-# Get connection name
-CLOUD_SQL_CONN=$(gcloud sql instances describe rams-db --format='value(connectionName)')
-
-# Database URL using Cloud SQL Unix socket
-DB_URL="postgresql+asyncpg://postgres:YOUR_PASSWORD@/resources_db?host=/cloudsql/${CLOUD_SQL_CONN}"
-
-# Create each secret
-echo -n "YOUR_GEMINI_KEY" | gcloud secrets create gemini-api-key --data-file=-
-echo -n "$API_KEY" | gcloud secrets create api-key --data-file=-
-echo -n "$DB_URL" | gcloud secrets create database-url --data-file=-
-
-# Optional: Neo4j
-echo -n "neo4j+s://xxxx.databases.neo4j.io" | gcloud secrets create neo4j-uri --data-file=-
-echo -n "YOUR_NEO4J_PASSWORD" | gcloud secrets create neo4j-password --data-file=-
-```
-
-### 3.3 Grant Cloud Run access to secrets
-
-```bash
-PROJECT_NUM=$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')
-SA_EMAIL="${PROJECT_NUM}-compute@developer.gserviceaccount.com"
-
-for SECRET in gemini-api-key api-key database-url neo4j-uri neo4j-password; do
-  gcloud secrets add-iam-policy-binding "$SECRET" \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="roles/secretmanager.secretAccessor" --quiet
-done
-```
+1. Go to [console.neo4j.io](https://console.neo4j.io)
+2. Create a free instance
+3. Save the connection URI, username, and password
 
 ---
 
 ## Phase 4: Deploy Backend
 
-### 4.1 Build with Cloud Build
+### 4.1 Add backend service
 
-```bash
-REGISTRY="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/rams-agent"
-TAG="${REGISTRY}/rams-backend:$(git rev-parse --short HEAD)"
+In Railway dashboard, click **+ New** → **GitHub Repo** → select your repo. Set the **root directory** to `backend/`.
 
-gcloud builds submit ./backend --tag "$TAG" --quiet
+### 4.2 Set start command
+
+In the service settings, set the start command:
+
+```
+chmod +x start.sh && ./start.sh
 ```
 
-> This uses the `backend/Dockerfile` (Python 3.12-slim, uvicorn on port 8000).
+Or alternatively:
 
-### 4.2 Deploy to Cloud Run
-
-```bash
-CLOUD_SQL_CONN=$(gcloud sql instances describe rams-db --format='value(connectionName)')
-
-gcloud run deploy rams-backend \
-  --image "$TAG" \
-  --region "$GCP_REGION" \
-  --port 8000 \
-  --memory 512Mi --cpu 1 \
-  --min-instances 0 --max-instances 3 \
-  --allow-unauthenticated \
-  --add-cloudsql-instances "$CLOUD_SQL_CONN" \
-  --set-secrets "DATABASE_URL=database-url:latest,GEMINI_API_KEY=gemini-api-key:latest,API_KEY=api-key:latest,NEO4J_URI=neo4j-uri:latest,NEO4J_PASSWORD=neo4j-password:latest" \
-  --set-env-vars 'NEO4J_USERNAME=neo4j,NEO4J_DATABASE=neo4j,DEBUG=false,ALLOWED_ORIGINS=["https://rams.rambuilds.dev","chrome-extension://*"]'
+```
+alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 4.3 Verify
+### 4.3 Set environment variables
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | `postgresql+asyncpg://${{rams-postgres.PGUSER}}:${{rams-postgres.PGPASSWORD}}@${{rams-postgres.PGHOST}}:${{rams-postgres.PGPORT}}/${{rams-postgres.PGDATABASE}}` |
+| `GEMINI_API_KEY` | From Google AI Studio |
+| `API_KEY` | Generate with `openssl rand -base64 32` |
+| `NEO4J_URI` | AuraDB connection URI (e.g. `neo4j+s://xxxx.databases.neo4j.io`) |
+| `NEO4J_USERNAME` | `neo4j` |
+| `NEO4J_PASSWORD` | AuraDB password |
+| `NEO4J_DATABASE` | `neo4j` |
+| `DEBUG` | `false` |
+| `ALLOWED_ORIGINS` | `["https://rams.rambuilds.dev","chrome-extension://*"]` |
+
+### 4.4 Set health check
+
+Set the health check path to `/health` in the service settings.
+
+### 4.5 Verify
 
 ```bash
-BACKEND_URL=$(gcloud run services describe rams-backend \
-  --region "$GCP_REGION" --format='value(status.url)')
-
-curl "${BACKEND_URL}/health"
+curl <railway-backend-url>/health
 # {"status":"ok"}
 ```
 
 ---
 
-## Phase 5: Database Migrations
+## Phase 5: Deploy Frontend
 
-Run Alembic migrations via a Cloud Run Job:
+### 5.1 Add frontend service
 
-### 5.1 Create the migration job
+In Railway dashboard, click **+ New** → **GitHub Repo** → select your repo. Set the **root directory** to `frontend/`.
 
-```bash
-CLOUD_SQL_CONN=$(gcloud sql instances describe rams-db --format='value(connectionName)')
-TAG="${REGISTRY}/rams-backend:$(git rev-parse --short HEAD)"
+### 5.2 Set environment variables
 
-gcloud run jobs create rams-migrate \
-  --image "$TAG" \
-  --region "$GCP_REGION" \
-  --add-cloudsql-instances "$CLOUD_SQL_CONN" \
-  --set-secrets "DATABASE_URL=database-url:latest" \
-  --command "alembic" --args "upgrade,head"
-```
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `https://api.rams.rambuilds.dev` |
+| `NEXT_PUBLIC_API_KEY` | Same as backend `API_KEY` |
 
-### 5.2 Execute
+The `frontend/railway.toml` ensures these are passed as Docker build args automatically.
 
-```bash
-gcloud run jobs execute rams-migrate --region "$GCP_REGION" --wait
-```
+### 5.3 Verify
 
-### 5.3 For future migrations
-
-Update the job image and re-execute:
-
-```bash
-gcloud run jobs update rams-migrate \
-  --image "$NEW_TAG" \
-  --region "$GCP_REGION"
-
-gcloud run jobs execute rams-migrate --region "$GCP_REGION" --wait
-```
+Open the Railway-generated URL in your browser — you should see the Rams Agent UI.
 
 ---
 
-## Phase 6: Deploy Frontend
+## Phase 6: Cloudflare DNS Setup
 
-The frontend requires build-time environment variables (`NEXT_PUBLIC_*`), so it must be built locally or in CI with Docker — not with Cloud Build.
+### 6.1 Add domain to Cloudflare
 
-### 6.1 Build the Docker image
+1. Add `rambuilds.dev` to your Cloudflare account
+2. Update nameservers at your registrar to Cloudflare's
 
-```bash
-TAG="${REGISTRY}/rams-frontend:$(git rev-parse --short HEAD)"
+### 6.2 Add custom domains on Railway
 
-# Retrieve the production API key
-PROD_API_KEY=$(gcloud secrets versions access latest --secret=api-key)
+In each Railway service's settings, add a custom domain. Railway will give you a CNAME target.
 
-docker build \
-  --build-arg NEXT_PUBLIC_API_URL="https://api.rams.rambuilds.dev" \
-  --build-arg NEXT_PUBLIC_API_KEY="$PROD_API_KEY" \
-  -t "$TAG" \
-  ./frontend
-```
+### 6.3 Create DNS records
 
-> The `frontend/Dockerfile` uses a multi-stage build: Node 20 Alpine, pnpm, Next.js standalone output, serves on port 3000.
+| Type | Name | Content | Proxy |
+|---|---|---|---|
+| CNAME | `rams` | `<railway-frontend>.up.railway.app` | Proxied |
+| CNAME | `api.rams` | `<railway-backend>.up.railway.app` | Proxied |
 
-### 6.2 Push to Artifact Registry
+### 6.4 Configure SSL/TLS
 
-```bash
-docker push "$TAG"
-```
+- Set SSL/TLS mode to **Full (Strict)**
 
-### 6.3 Deploy to Cloud Run
+### 6.5 Recommended settings
 
-```bash
-gcloud run deploy rams-frontend \
-  --image "$TAG" \
-  --region "$GCP_REGION" \
-  --port 3000 \
-  --memory 256Mi --cpu 1 \
-  --min-instances 0 --max-instances 2 \
-  --allow-unauthenticated
-```
-
-### 6.4 Verify
-
-```bash
-FRONTEND_URL=$(gcloud run services describe rams-frontend \
-  --region "$GCP_REGION" --format='value(status.url)')
-
-echo "Frontend: $FRONTEND_URL"
-```
-
----
-
-## Phase 7: Custom Domains
-
-Map your custom domains to the Cloud Run services:
-
-```bash
-# Frontend: rams.rambuilds.dev
-gcloud run domain-mappings create \
-  --service rams-frontend \
-  --domain rams.rambuilds.dev \
-  --region "$GCP_REGION"
-
-# Backend: api.rams.rambuilds.dev
-gcloud run domain-mappings create \
-  --service rams-backend \
-  --domain api.rams.rambuilds.dev \
-  --region "$GCP_REGION"
-```
-
----
-
-## Phase 8: DNS Configuration
-
-Add these CNAME records at your DNS provider (Vercel, Netlify, Cloudflare, etc.):
-
-| Type | Name | Value |
-|---|---|---|
-| CNAME | `rams` | `ghs.googlehosted.com.` |
-| CNAME | `api.rams` | `ghs.googlehosted.com.` |
-
-> If your DNS provider manages `rambuilds.dev`, the "Name" field is relative to the zone. For example, at Vercel, add `rams` as a CNAME pointing to `ghs.googlehosted.com.`
-
-TLS certificates are automatically provisioned by Google. Allow 15–30 minutes after DNS propagation.
+- **Page Rule**: `api.rams.rambuilds.dev/*` → Cache Level: Bypass
+- **Always Use HTTPS**: On
+- **Brotli**: On
+- **Auto Minify**: On
 
 ### Verify DNS
 
 ```bash
 dig rams.rambuilds.dev CNAME +short
-# ghs.googlehosted.com.
-
 dig api.rams.rambuilds.dev CNAME +short
-# ghs.googlehosted.com.
 ```
 
-### Verify TLS
+---
 
-```bash
-curl -I https://api.rams.rambuilds.dev/health
-# HTTP/2 200
+## Phase 7: S3 / Object Storage
 
-curl -I https://rams.rambuilds.dev
-# HTTP/2 200
-```
+**Not needed now.** All content is stored in PostgreSQL (scraped text, embeddings, search vectors).
+
+**When needed later, use Cloudflare R2:**
+
+- Free tier: 10GB storage, 10M reads, 1M writes/month, zero egress
+- S3-compatible API (works with boto3)
+- Already using Cloudflare = single vendor
+- Use cases: screenshots, PDF uploads, database backups
 
 ---
 
 ## Chrome Extension Setup
 
-The Chrome extension (`extension-v2/`) connects to the backend API via a configurable URL stored in `chrome.storage.sync`.
+The Chrome extension (`extension-v2/`) connects to the backend API.
 
-### Build the extension
+### Build
 
 ```bash
 cd extension-v2
 npm install
-npm run build    # webpack --mode production
+npm run build
 ```
-
-The built files will be in `extension-v2/dist/`.
 
 ### Load in Chrome
 
 1. Open `chrome://extensions/`
 2. Enable **Developer mode**
-3. Click **Load unpacked** → select the `extension-v2/dist` folder
+3. Click **Load unpacked** → select `extension-v2/dist`
 
-### Configure for production
+### Configure
 
-1. Click the Rams Agent extension icon
-2. Go to the **Options** page (or right-click → Options)
-3. Set:
-   - **Backend URL**: `https://api.rams.rambuilds.dev`
-   - **API Key**: your production API key (same value as the `api-key` secret)
-4. Click **Save**
-
-> The extension uses the `X-API-Key` header for authentication. The backend's CORS config includes `chrome-extension://*` so requests from the extension are allowed.
-
-### Keyboard shortcut
-
-- **Windows/Linux**: `Alt+R`
-- **Mac**: `Ctrl+R` (MacCtrl+R)
+1. Click the extension icon → Options
+2. Set **Backend URL**: `https://api.rams.rambuilds.dev`
+3. Set **API Key**: your production API key
+4. Save
 
 ---
 
-## CI/CD with GitHub Actions
+## CI/CD
 
-The project includes a GitHub Actions workflow at `.github/workflows/deploy.yml` that auto-deploys on push to `main`.
+**Railway handles deploys automatically** — pushing to `main` triggers a build and deploy for each service. No GitHub Actions needed for deployment.
 
-### How it works
+The `.github/workflows/ci.yml` workflow runs linting and type checking on push/PR:
 
-- Uses `dorny/paths-filter` to detect changes in `backend/` and `frontend/`
-- Only deploys the service(s) that changed
-- Authenticates via **Workload Identity Federation** (no service account keys)
-- Backend builds use Cloud Build; frontend builds use Docker in the runner
-
-### Required GitHub Secrets
-
-| Secret | Description |
-|---|---|
-| `GCP_PROJECT_ID` | Your GCP project ID |
-| `WIF_PROVIDER` | Workload Identity Provider resource name |
-| `WIF_SERVICE_ACCOUNT` | Service account email for WIF |
-
-### Set up Workload Identity Federation
-
-```bash
-# Create a Workload Identity Pool
-gcloud iam workload-identity-pools create "github-pool" \
-  --location="global" \
-  --display-name="GitHub Actions Pool"
-
-# Create a Provider for GitHub
-gcloud iam workload-identity-pools providers create-oidc "github-provider" \
-  --location="global" \
-  --workload-identity-pool="github-pool" \
-  --display-name="GitHub Provider" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
-  --issuer-uri="https://token.actions.githubusercontent.com"
-
-# Get the full provider resource name (set as WIF_PROVIDER secret)
-gcloud iam workload-identity-pools providers describe "github-provider" \
-  --location="global" \
-  --workload-identity-pool="github-pool" \
-  --format="value(name)"
-# Output: projects/PROJECT_NUM/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-
-# Create a service account for deployments
-gcloud iam service-accounts create github-deploy \
-  --display-name="GitHub Actions Deploy"
-
-SA_EMAIL="github-deploy@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-
-# Grant necessary roles
-for ROLE in roles/run.admin roles/cloudbuild.builds.editor roles/artifactregistry.writer roles/iam.serviceAccountUser roles/cloudsql.client roles/secretmanager.secretAccessor; do
-  gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="$ROLE"
-done
-
-# Allow GitHub Actions to impersonate this SA
-REPO="YOUR_GITHUB_USERNAME/Rams_agent"  # change this
-
-gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
-  --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/$(gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)')/locations/global/workloadIdentityPools/github-pool/attribute.repository/${REPO}"
-```
-
-Then set these GitHub secrets:
-
-- `GCP_PROJECT_ID`: your project ID
-- `WIF_PROVIDER`: the full provider name from above
-- `WIF_SERVICE_ACCOUNT`: `github-deploy@YOUR_PROJECT.iam.gserviceaccount.com`
-
----
-
-## Automated Deployment Script
-
-The `deploy.sh` script automates all phases. It prompts for secrets interactively.
-
-### Run all phases
-
-```bash
-export GCP_PROJECT_ID="your-project-id"
-export GCP_REGION="us-central1"   # optional, defaults to us-central1
-
-./deploy.sh
-```
-
-### Run a specific phase
-
-```bash
-./deploy.sh --phase 4    # Only deploy backend
-./deploy.sh --phase 6    # Only deploy frontend
-```
-
-### Run from a phase onward
-
-```bash
-./deploy.sh --from-phase 3   # Run phases 3, 4, 5, 6, 7, 8
-```
-
-### Phase summary
-
-| Phase | Action |
-|---|---|
-| 1 | Enable APIs, create Artifact Registry |
-| 2 | Create Cloud SQL instance, enable pgvector |
-| 3 | Create/update secrets in Secret Manager |
-| 4 | Build & deploy backend to Cloud Run |
-| 5 | Run Alembic database migrations |
-| 6 | Build & deploy frontend to Cloud Run |
-| 7 | Map custom domains |
-| 8 | Print DNS instructions & verification commands |
+- **Backend**: `ruff check`
+- **Frontend**: `eslint` + `tsc --noEmit`
 
 ---
 
 ## Verification Checklist
 
-After deployment, verify each component:
-
-### Backend health
-
 ```bash
+# 1. Backend health
 curl https://api.rams.rambuilds.dev/health
 # {"status":"ok"}
-```
 
-### Backend auth
+# 2. Backend auth
+curl -H "X-API-Key: YOUR_API_KEY" "https://api.rams.rambuilds.dev/resources?page=1&page_size=1"
 
-```bash
-curl -H "X-API-Key: YOUR_API_KEY" https://api.rams.rambuilds.dev/resources?page=1&page_size=1
-# {"items":[],"total":0,"page":1,"page_size":1}
-```
+# 3. Frontend
+open https://rams.rambuilds.dev
 
-### Frontend
+# 4. Chrome extension: save a resource + test search
 
-Open https://rams.rambuilds.dev in your browser — you should see the Rams Agent UI.
-
-### Chrome extension
-
-1. Open the extension popup
-2. Try saving a resource from any webpage
-3. Test the search tab
-4. Open the side panel and test chat
-
-### Graph stats (if Neo4j is configured)
-
-```bash
+# 5. Graph stats
 curl -H "X-API-Key: YOUR_API_KEY" https://api.rams.rambuilds.dev/graph/stats
 ```
 
@@ -624,156 +319,58 @@ curl -H "X-API-Key: YOUR_API_KEY" https://api.rams.rambuilds.dev/graph/stats
 
 **Symptom**: Backend logs show `extension "vector" is not available`
 
-**Fix**: Connect to Cloud SQL and create the extension manually:
+**Fix**: Connect and create the extension:
 
 ```bash
-gcloud sql connect rams-db --user=postgres --database=resources_db
+railway connect postgres
 ```
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-### CORS errors in browser/extension
+### CORS errors
 
-**Symptom**: `Access-Control-Allow-Origin` errors in console
-
-**Check**: The backend's `ALLOWED_ORIGINS` env var must include the frontend domain and `chrome-extension://*`:
-
-```bash
-gcloud run services describe rams-backend \
-  --region us-central1 \
-  --format='yaml(spec.template.spec.containers[0].env)'
-```
-
-**Fix**: Update if needed:
-
-```bash
-gcloud run services update rams-backend \
-  --region us-central1 \
-  --set-env-vars 'ALLOWED_ORIGINS=["https://rams.rambuilds.dev","chrome-extension://*"]'
-```
+**Check**: Ensure `ALLOWED_ORIGINS` env var on the backend includes `https://rams.rambuilds.dev` and `chrome-extension://*`.
 
 ### DNS not resolving / TLS errors
 
-**Symptom**: `ERR_NAME_NOT_RESOLVED` or certificate errors
-
-**Causes**:
-- DNS records not added yet — check with `dig rams.rambuilds.dev CNAME +short`
-- DNS propagation — wait 15-30 minutes
-- Domain mapping not verified — check `gcloud run domain-mappings list --region us-central1`
-
-### Cold start latency
-
-**Symptom**: First request after idle takes 5-10 seconds
-
-**Cause**: `min-instances 0` means Cloud Run scales to zero when idle.
-
-**Fix**: Set `--min-instances 1` on the backend (adds ~$5-10/month):
-
-```bash
-gcloud run services update rams-backend \
-  --region us-central1 \
-  --min-instances 1
-```
-
-### Cloud SQL connection refused
-
-**Symptom**: Backend logs show `connection refused` to database
-
-**Check**:
-1. Cloud SQL instance is running: `gcloud sql instances describe rams-db --format='value(state)'`
-2. The `--add-cloudsql-instances` flag was set during deploy
-3. The `DATABASE_URL` secret uses the Unix socket format: `postgresql+asyncpg://postgres:PASS@/resources_db?host=/cloudsql/PROJECT:REGION:rams-db`
-
-### Migration job fails
-
-**Symptom**: `gcloud run jobs execute rams-migrate` exits with error
-
-**Debug**:
-
-```bash
-gcloud run jobs executions list --job rams-migrate --region us-central1
-gcloud logging read "resource.type=cloud_run_job AND resource.labels.job_name=rams-migrate" --limit=20
-```
+- Verify CNAME records with `dig rams.rambuilds.dev CNAME +short`
+- Ensure Cloudflare SSL/TLS is set to **Full (Strict)**
+- Allow 15-30 minutes for DNS propagation
 
 ### Frontend shows blank page
 
-**Check**: The `NEXT_PUBLIC_API_URL` build arg was set correctly during the Docker build. This is baked in at build time and cannot be changed at runtime.
+The `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_API_KEY` are baked in at build time. If they're wrong, trigger a redeploy after updating the env vars in Railway.
 
-**Fix**: Rebuild and redeploy:
+### Neo4j connection timeout
 
-```bash
-docker build \
-  --build-arg NEXT_PUBLIC_API_URL="https://api.rams.rambuilds.dev" \
-  --build-arg NEXT_PUBLIC_API_KEY="YOUR_KEY" \
-  -t "$TAG" \
-  ./frontend
-docker push "$TAG"
-gcloud run deploy rams-frontend --image "$TAG" --region us-central1
-```
+AuraDB free tier pauses after 3 days of inactivity. The first request after a pause may take 30-60 seconds while the instance resumes. The backend handles this gracefully.
+
+### Cold start latency
+
+Railway services may have brief cold starts if they scale to zero. This is expected on the Hobby plan.
 
 ---
 
 ## Updating & Redeploying
 
-### Backend only
+### Automatic
+
+Push to `main` — Railway auto-deploys both services (only rebuilds what changed).
 
 ```bash
-export GCP_PROJECT_ID="your-project-id"
-./deploy.sh --phase 4   # rebuild + deploy backend
-./deploy.sh --phase 5   # run migrations (if schema changed)
-```
-
-Or manually:
-
-```bash
-REGISTRY="us-central1-docker.pkg.dev/${GCP_PROJECT_ID}/rams-agent"
-TAG="${REGISTRY}/rams-backend:$(git rev-parse --short HEAD)"
-
-gcloud builds submit ./backend --tag "$TAG" --quiet
-gcloud run deploy rams-backend --image "$TAG" --region us-central1
-```
-
-### Frontend only
-
-```bash
-./deploy.sh --phase 6
-```
-
-### Both
-
-```bash
-./deploy.sh --from-phase 4
-```
-
-### Via CI/CD
-
-Just push to `main`. GitHub Actions will detect which services changed and deploy them automatically.
-
-```bash
-git add -A
-git commit -m "your changes"
 git push origin main
 ```
 
-### Updating secrets
+### Manual redeploy
 
-```bash
-echo -n "new-value" | gcloud secrets versions add gemini-api-key --data-file=-
+In the Railway dashboard, click the service → **Deploy** → **Redeploy**.
 
-# Redeploy to pick up the new secret version
-gcloud run services update rams-backend --region us-central1
-```
+### Updating environment variables
+
+Change the variable in the Railway dashboard. Railway automatically redeploys the service.
 
 ### Rollback
 
-```bash
-# List revisions
-gcloud run revisions list --service rams-backend --region us-central1
-
-# Route traffic to a previous revision
-gcloud run services update-traffic rams-backend \
-  --region us-central1 \
-  --to-revisions=rams-backend-REVISION_ID=100
-```
+In the Railway dashboard, go to the service's **Deployments** tab and click **Rollback** on a previous deployment.
