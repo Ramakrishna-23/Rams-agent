@@ -14,7 +14,10 @@ from app.graph import ensure_graph_schema, close_neo4j_driver
 async def lifespan(app: FastAPI):
     settings = get_settings()
     print(f"Starting {settings.app_name}...")
-    await ensure_graph_schema()
+    try:
+        await ensure_graph_schema()
+    except Exception as e:
+        print(f"Neo4j connection failed (non-fatal): {e}")
     yield
     await close_neo4j_driver()
     print("Shutting down...")
