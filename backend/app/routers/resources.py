@@ -117,6 +117,13 @@ async def delete_resource(resource_id: uuid.UUID, db: AsyncSession = Depends(get
         raise HTTPException(status_code=404, detail="Resource not found")
     await db.delete(resource)
 
+    # Best-effort graph cleanup
+    try:
+        from app.services.graph_service import delete_resource_from_graph
+        await delete_resource_from_graph(str(resource_id))
+    except Exception as e:
+        print(f"Graph delete failed for {resource_id}: {e}")
+
 
 @router.post("/{resource_id}/review", response_model=ResourceOut)
 async def review_resource(resource_id: uuid.UUID, db: AsyncSession = Depends(get_db)):

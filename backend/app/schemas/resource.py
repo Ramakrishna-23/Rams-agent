@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, HttpUrl
+
+VALID_STATUSES = Literal[
+    "unread", "read", "to_review", "archived", "favorite",
+    "about_to_do", "lets_do", "doing", "done", "archive",
+]
 
 
 class TagOut(BaseModel):
@@ -22,7 +28,7 @@ class ResourceCreate(BaseModel):
 class ResourceUpdate(BaseModel):
     title: str | None = None
     notes: str | None = None
-    status: str | None = None
+    status: VALID_STATUSES | None = None
 
 
 class ResourceOut(BaseModel):

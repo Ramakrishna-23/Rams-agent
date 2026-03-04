@@ -33,6 +33,38 @@ Content: {content[:8000]}"""
     return response.text
 
 
+async def extract_concepts(content: str, title: str = "") -> list[dict]:
+    """Extract 3-8 key concepts from content as [{"name": "...", "weight": 0.8}]."""
+    client = get_gemini_client()
+    settings = get_settings()
+
+    prompt = f"""Extract 3-8 key concepts from the following content.
+Return ONLY a JSON array, no markdown or explanation.
+Each item must have "name" (lowercase, 1-3 words) and "weight" (0.0-1.0 relevance).
+Example: [{{"name": "neural networks", "weight": 0.9}}, {{"name": "backpropagation", "weight": 0.7}}]
+
+Title: {title}
+Content: {content[:6000]}"""
+
+    try:
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=prompt,
+        )
+        import json
+        text = response.text.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        concepts = json.loads(text)
+        return [
+            {"name": c["name"].lower().strip(), "weight": float(c.get("weight", 0.5))}
+            for c in concepts
+            if isinstance(c, dict) and "name" in c
+        ][:8]
+    except Exception:
+        return []
+
+
 async def generate_tags(content: str, title: str = "") -> list[str]:
     """Generate relevant tags for the content using Gemini."""
     client = get_gemini_client()

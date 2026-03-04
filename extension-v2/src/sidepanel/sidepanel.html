@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rams Agent - Chat</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <div class="chat-layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h2>Sessions</h2>
+        <button id="new-chat-btn" class="btn-icon" title="New Chat">+</button>
+      </div>
+      <div id="sessions-list" class="sessions-list"></div>
+    </aside>
+    <main class="chat-main">
+      <div id="messages" class="messages"></div>
+      <div id="streaming-indicator" class="streaming-indicator hidden">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <form id="chat-form" class="chat-input-form">
+        <textarea id="chat-input" placeholder="Ask about your resources..." rows="1"></textarea>
+        <button type="submit" id="send-btn" class="send-btn" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4z"/><path d="m22 2-10 10"/>
+          </svg>
+        </button>
+      </form>
+    </main>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

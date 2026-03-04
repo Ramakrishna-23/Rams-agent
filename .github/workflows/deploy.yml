@@ -1,0 +1,128 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  REGISTRY: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rams-agent
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  deploy-backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push backend image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          gcloud builds submit ./backend \
+            --tag "${REGISTRY}/rams-backend:${IMAGE_TAG}" \
+            --quiet
+
+      - name: Deploy backend to Cloud Run
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          CLOUD_SQL_CONN=$(gcloud sql instances describe rams-db \
+            --format='value(connectionName)')
+
+          gcloud run deploy rams-backend \
+            --image "${REGISTRY}/rams-backend:${IMAGE_TAG}" \
+            --region "${REGION}" \
+            --port 8000 \
+            --memory 512Mi --cpu 1 \
+            --min-instances 0 --max-instances 3 \
+            --allow-unauthenticated \
+            --add-cloudsql-instances "$CLOUD_SQL_CONN" \
+            --set-secrets "DATABASE_URL=database-url:latest,GEMINI_API_KEY=gemini-api-key:latest,API_KEY=api-key:latest,NEO4J_URI=neo4j-uri:latest,NEO4J_PASSWORD=neo4j-password:latest" \
+            --set-env-vars 'NEO4J_USERNAME=neo4j,NEO4J_DATABASE=neo4j,DEBUG=false,ALLOWED_ORIGINS=["https://rams.rambuilds.dev","chrome-extension://*"]'
+
+      - name: Run migrations
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          gcloud run jobs update rams-migrate \
+            --image "${REGISTRY}/rams-backend:${IMAGE_TAG}" \
+            --region "${REGION}"
+          gcloud run jobs execute rams-migrate \
+            --region "${REGION}" --wait
+
+  deploy-frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push frontend image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          PROD_API_KEY=$(gcloud secrets versions access latest --secret=api-key)
+
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=https://api.rams.rambuilds.dev \
+            --build-arg NEXT_PUBLIC_API_KEY="$PROD_API_KEY" \
+            -t "${REGISTRY}/rams-frontend:${IMAGE_TAG}" \
+            ./frontend
+
+          docker push "${REGISTRY}/rams-frontend:${IMAGE_TAG}"
+
+      - name: Deploy frontend to Cloud Run
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          gcloud run deploy rams-frontend \
+            --image "${REGISTRY}/rams-frontend:${IMAGE_TAG}" \
+            --region "${REGION}" \
+            --port 3000 \
+            --memory 256Mi --cpu 1 \
+            --min-instances 0 --max-instances 2 \
+            --allow-unauthenticated

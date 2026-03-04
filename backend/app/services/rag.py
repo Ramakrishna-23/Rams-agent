@@ -29,6 +29,36 @@ async def rag_chat(query: str, session_id: str) -> AsyncIterator[dict]:
             f"Content: {snippet}\n"
         )
 
+    # 2b. Enrich with graph-related resources (best-effort)
+    try:
+        from app.services.graph_service import get_related_resources
+        from sqlalchemy import select as sa_select
+        from app.models.resource import Resource as ResourceModel
+
+        graph_ids: set[str] = set()
+        for rid in resource_ids[:3]:
+            related = await get_related_resources(rid, limit=3)
+            for rel in related:
+                if rel["pg_id"] not in resource_ids and rel["pg_id"] not in graph_ids:
+                    graph_ids.add(rel["pg_id"])
+
+        if graph_ids:
+            async with async_session() as db2:
+                result2 = await db2.execute(
+                    sa_select(ResourceModel).where(ResourceModel.id.in_(list(graph_ids)[:3]))
+                )
+                graph_resources = result2.scalars().all()
+                for gr in graph_resources:
+                    snippet = (gr.scraped_content or "")[:1500]
+                    context_parts.append(
+                        f"**[Graph-related] {gr.title or 'Untitled'}** ({gr.url})\n"
+                        f"Summary: {gr.summary or 'N/A'}\n"
+                        f"Content: {snippet}\n"
+                    )
+                    resource_ids.append(str(gr.id))
+    except Exception:
+        pass
+
     context = "\n---\n".join(context_parts) if context_parts else "No relevant resources found."
 
     # 3. Generate response with Gemini (streaming)

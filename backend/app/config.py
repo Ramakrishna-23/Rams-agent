@@ -25,6 +25,15 @@ class Settings(BaseSettings):
     cloud_tasks_queue: str = "resource-processing"
     backend_url: str = "http://localhost:8000"
 
+    # Neo4j (optional — empty uri disables graph features)
+    neo4j_uri: str = ""
+    neo4j_username: str = "neo4j"
+    neo4j_password: str = ""
+    neo4j_database: str = "neo4j"
+
+    # CORS
+    allowed_origins: list[str] = ["http://localhost:3000", "chrome-extension://*"]
+
     # Spaced repetition intervals (days)
     review_intervals: list[int] = [1, 3, 7, 14, 30, 60, 120]
 

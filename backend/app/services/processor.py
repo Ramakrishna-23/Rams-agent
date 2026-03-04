@@ -6,8 +6,9 @@ from sqlalchemy import select, text as sa_text, func
 from app.database import async_session
 from app.models.resource import Resource, Tag, resource_tags
 from app.services.scraper import scrape_url
-from app.services.gemini import summarize_content, generate_tags
+from app.services.gemini import summarize_content, generate_tags, extract_concepts
 from app.services.embeddings import generate_embedding
+from app.services.graph_service import sync_resource_to_graph, compute_resource_relationships
 
 
 async def process_resource(resource_id: str):
@@ -61,6 +62,21 @@ async def process_resource(resource_id: str):
             )
 
             await db.commit()
+
+            # 6. Best-effort graph sync (after PG commit so PG data is safe)
+            try:
+                concepts = await extract_concepts(content, resource.title or "")
+                await sync_resource_to_graph(
+                    str(resource.id),
+                    resource.title or "",
+                    resource.url,
+                    [t.name for t in resource.tags],
+                    concepts,
+                )
+                await compute_resource_relationships(str(resource.id))
+            except Exception as e:
+                print(f"Graph sync failed for {resource_id}: {e}")
+
             print(f"Successfully processed resource {resource_id}")
         except Exception as e:
             print(f"Error processing resource {resource_id}: {e}")

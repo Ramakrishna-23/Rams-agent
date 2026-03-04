@@ -29,7 +29,11 @@ class Resource(Base):
     summary: Mapped[Optional[str]] = mapped_column(Text)
     notes: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[str] = mapped_column(
-        Enum("unread", "read", "to_review", "archived", name="resource_status"),
+        Enum(
+            "unread", "read", "to_review", "archived", "favorite",
+            "about_to_do", "lets_do", "doing", "done", "archive",
+            name="resource_status",
+        ),
         default="unread",
     )
     embedding = Column(Vector(768))
