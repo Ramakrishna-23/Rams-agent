@@ -18,6 +18,7 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
+import { NewActionDialog } from "@/components/new-action-dialog";
 
 interface KanbanColumn {
   id: string;
@@ -229,6 +230,7 @@ export default function DashboardPage() {
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
           Save
         </Button>
+        <NewActionDialog onCreated={fetchAllResources} variant="outline" />
       </form>
 
       {/* Kanban Board */}

@@ -56,6 +56,11 @@ class ApiClient {
     });
   }
 
+  async createAction(url: string, title?: string, notes?: string): Promise<Resource> {
+    const resource = await this.createResource(url, title, notes);
+    return this.updateResource(resource.id, { status: "about_to_do" });
+  }
+
   async updateResource(id: number, data: Partial<Resource>): Promise<Resource> {
     return this.request<Resource>(`/api/resources/${id}`, {
       method: "PATCH",

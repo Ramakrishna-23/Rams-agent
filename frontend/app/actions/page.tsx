@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ArchiveIcon,
 } from "lucide-react";
+import { NewActionDialog } from "@/components/new-action-dialog";
 
 interface KanbanColumn {
   id: string;
@@ -171,9 +172,12 @@ export default function ActionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Actions</h1>
-        <span className="text-sm text-muted-foreground">
-          {actionResources.length} action items
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            {actionResources.length} action items
+          </span>
+          <NewActionDialog onCreated={fetchAllResources} />
+        </div>
       </div>
 
       {/* Kanban Board */}
