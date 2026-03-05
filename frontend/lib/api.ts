@@ -42,40 +42,40 @@ class ApiClient {
     const params = new URLSearchParams({ page: String(page), page_size: "12" });
     if (status) params.set("status", status);
     if (tag) params.set("tag", tag);
-    return this.request<ResourceList>(`/resources?${params}`);
+    return this.request<ResourceList>(`/api/resources?${params}`);
   }
 
   async getResource(id: number): Promise<Resource> {
-    return this.request<Resource>(`/resources/${id}`);
+    return this.request<Resource>(`/api/resources/${id}`);
   }
 
   async createResource(url: string, title?: string, notes?: string): Promise<Resource> {
-    return this.request<Resource>("/resources", {
+    return this.request<Resource>("/api/resources", {
       method: "POST",
       body: JSON.stringify({ url, title, notes }),
     });
   }
 
   async updateResource(id: number, data: Partial<Resource>): Promise<Resource> {
-    return this.request<Resource>(`/resources/${id}`, {
+    return this.request<Resource>(`/api/resources/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
   }
 
   async deleteResource(id: number): Promise<void> {
-    await this.request<void>(`/resources/${id}`, { method: "DELETE" });
+    await this.request<void>(`/api/resources/${id}`, { method: "DELETE" });
   }
 
   async reviewResource(id: number): Promise<Resource> {
-    return this.request<Resource>(`/resources/${id}/review`, { method: "POST" });
+    return this.request<Resource>(`/api/resources/${id}/review`, { method: "POST" });
   }
 
   // Search
   async search(query: string, type?: string): Promise<SearchResult[]> {
     const params = new URLSearchParams({ q: query });
     if (type) params.set("type", type);
-    return this.request<SearchResult[]>(`/search?${params}`);
+    return this.request<SearchResult[]>(`/api/search?${params}`);
   }
 
   // Chat
@@ -83,7 +83,7 @@ class ApiClient {
     const body: Record<string, string> = { message };
     if (sessionId) body.session_id = sessionId;
 
-    const res = await fetch(`${this.baseUrl}/chat`, {
+    const res = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: this.headers(),
       body: JSON.stringify(body),
@@ -98,28 +98,28 @@ class ApiClient {
   }
 
   async getChatSessions(): Promise<ChatSession[]> {
-    return this.request<ChatSession[]>("/chat/sessions");
+    return this.request<ChatSession[]>("/api/chat/sessions");
   }
 
   async getChatSession(id: string): Promise<{ session: ChatSession; messages: ChatMessage[] }> {
-    return this.request<{ session: ChatSession; messages: ChatMessage[] }>(`/chat/sessions/${id}`);
+    return this.request<{ session: ChatSession; messages: ChatMessage[] }>(`/api/chat/sessions/${id}`);
   }
 
   // Digest
   async getDigest(): Promise<DigestItem[]> {
-    return this.request<DigestItem[]>("/digest");
+    return this.request<DigestItem[]>("/api/digest");
   }
 
   // Reminders
   async createReminder(resourceId: number, remindAt: string): Promise<{ id: number }> {
-    return this.request<{ id: number }>("/reminders", {
+    return this.request<{ id: number }>("/api/reminders", {
       method: "POST",
       body: JSON.stringify({ resource_id: resourceId, remind_at: remindAt }),
     });
   }
 
   async deleteReminder(id: number): Promise<void> {
-    await this.request<void>(`/reminders/${id}`, { method: "DELETE" });
+    await this.request<void>(`/api/reminders/${id}`, { method: "DELETE" });
   }
 }
 
