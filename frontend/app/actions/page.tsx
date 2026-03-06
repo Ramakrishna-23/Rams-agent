@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   ArchiveIcon,
 } from "lucide-react";
-import { NewActionDialog } from "@/components/new-action-dialog";
+import { NewCardSection } from "@/components/new-card-section";
 
 interface KanbanColumn {
   id: string;
@@ -130,24 +130,6 @@ export default function ActionsPage() {
     }
   };
 
-  const handleToggleAction = async (resource: Resource, checked: boolean) => {
-    const newStatus = checked ? "about_to_do" : "unread";
-    try {
-      await api.updateResource(resource.id, { status: newStatus });
-      setResources((prev) =>
-        prev.map((r) =>
-          r.id === resource.id ? { ...r, status: newStatus } : r
-        )
-      );
-      if (selectedResource?.id === resource.id) {
-        setPanelOpen(false);
-        setSelectedResource(null);
-      }
-    } catch (err) {
-      console.error("Failed to toggle action:", err);
-    }
-  };
-
   const handleCardClick = (resource: Resource) => {
     setSelectedResource(resource);
     setPanelOpen(true);
@@ -172,13 +154,12 @@ export default function ActionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Actions</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
-            {actionResources.length} action items
-          </span>
-          <NewActionDialog onCreated={fetchAllResources} />
-        </div>
+        <span className="text-sm text-muted-foreground">
+          {actionResources.length} action items
+        </span>
       </div>
+
+      <NewCardSection defaultAction={true} onCreated={fetchAllResources} />
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -227,9 +208,6 @@ export default function ActionsPage() {
                           resource={resource}
                           compact
                           onClick={() => handleCardClick(resource)}
-                          showActionToggle
-                          isAction={isActionResource(resource)}
-                          onToggleAction={(checked) => handleToggleAction(resource, checked)}
                         />
                       </div>
                     ))

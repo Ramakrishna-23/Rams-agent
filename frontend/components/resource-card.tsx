@@ -3,7 +3,6 @@
 import { Resource } from "@/lib/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { ExternalLink, Clock } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -38,18 +37,12 @@ interface ResourceCardProps {
   resource: Resource;
   compact?: boolean;
   onClick?: () => void;
-  onToggleAction?: (checked: boolean) => void;
-  showActionToggle?: boolean;
-  isAction?: boolean;
 }
 
 export function ResourceCard({
   resource,
   compact,
   onClick,
-  onToggleAction,
-  showActionToggle,
-  isAction,
 }: ResourceCardProps) {
   const domain = (() => {
     try {
@@ -68,18 +61,6 @@ export function ResourceCard({
               {resource.title || "Untitled"}
             </h3>
             <div className="flex items-center gap-1.5 shrink-0">
-              {showActionToggle && (
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1"
-                >
-                  <span className="text-[9px] text-muted-foreground">Action</span>
-                  <Switch
-                    checked={!!isAction}
-                    onCheckedChange={(checked) => onToggleAction?.(checked)}
-                  />
-                </div>
-              )}
               <Badge
                 variant="outline"
                 className={`text-[10px] ${statusColors[resource.status] || ""}`}

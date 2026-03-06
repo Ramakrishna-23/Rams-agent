@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { Resource, isReadingResource, isActionResource } from "@/lib/types";
+import { Resource, isReadingResource } from "@/lib/types";
 import { ResourceCard } from "@/components/resource-card";
 import { ResourceDetailPanel } from "@/components/resource-detail-panel";
+import { NewCardSection } from "@/components/new-card-section";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -15,10 +14,7 @@ import {
   Eye,
   Star,
   Archive,
-  Plus,
-  Loader2,
 } from "lucide-react";
-import { NewActionDialog } from "@/components/new-action-dialog";
 
 interface KanbanColumn {
   id: string;
@@ -62,8 +58,6 @@ const columns: KanbanColumn[] = [
 export default function DashboardPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [url, setUrl] = useState("");
-  const [saving, setSaving] = useState(false);
   const [draggedResource, setDraggedResource] = useState<Resource | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
@@ -94,21 +88,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAllResources();
   }, [fetchAllResources]);
-
-  const handleQuickSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
-    setSaving(true);
-    try {
-      await api.createResource(url.trim());
-      setUrl("");
-      fetchAllResources();
-    } catch (err) {
-      console.error("Failed to save resource:", err);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleDragStart = (resource: Resource) => {
     setDraggedResource(resource);
@@ -144,23 +123,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleToggleAction = async (resource: Resource, checked: boolean) => {
-    const newStatus = checked ? "about_to_do" : "unread";
-    try {
-      await api.updateResource(resource.id, { status: newStatus });
-      setResources((prev) =>
-        prev.map((r) =>
-          r.id === resource.id ? { ...r, status: newStatus } : r
-        )
-      );
-      if (selectedResource?.id === resource.id) {
-        setSelectedResource({ ...resource, status: newStatus });
-      }
-    } catch (err) {
-      console.error("Failed to toggle action:", err);
-    }
-  };
-
   const handleCardClick = (resource: Resource) => {
     setSelectedResource(resource);
     setPanelOpen(true);
@@ -190,48 +152,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total Resources</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-amber-500">{stats.unread}</div>
-            <div className="text-xs text-muted-foreground">Yet to Read</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-500">{stats.favorites}</div>
-            <div className="text-xs text-muted-foreground">Favorites</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-muted-foreground">{stats.archived}</div>
-            <div className="text-xs text-muted-foreground">Archived</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Save */}
-      <form onSubmit={handleQuickSave} className="flex gap-2">
-        <Input
-          placeholder="Paste a URL to save..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="flex-1"
-        />
-        <Button type="submit" disabled={saving || !url.trim()}>
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          Save
-        </Button>
-        <NewActionDialog onCreated={fetchAllResources} variant="outline" />
-      </form>
+      {/* New Card Section */}
+      <NewCardSection defaultAction={false} onCreated={fetchAllResources} />
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -280,9 +202,6 @@ export default function DashboardPage() {
                           resource={resource}
                           compact
                           onClick={() => handleCardClick(resource)}
-                          showActionToggle
-                          isAction={isActionResource(resource)}
-                          onToggleAction={(checked) => handleToggleAction(resource, checked)}
                         />
                       </div>
                     ))
@@ -292,6 +211,34 @@ export default function DashboardPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-xs text-muted-foreground">Total Resources</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-amber-500">{stats.unread}</div>
+            <div className="text-xs text-muted-foreground">Yet to Read</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-500">{stats.favorites}</div>
+            <div className="text-xs text-muted-foreground">Favorites</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-muted-foreground">{stats.archived}</div>
+            <div className="text-xs text-muted-foreground">Archived</div>
+          </CardContent>
+        </Card>
       </div>
 
       <ResourceDetailPanel

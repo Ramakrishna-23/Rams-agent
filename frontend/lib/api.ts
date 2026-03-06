@@ -1,4 +1,4 @@
-import { Resource, ResourceList, ChatSession, ChatMessage, SearchResult, DigestItem } from "./types";
+import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
@@ -74,6 +74,18 @@ class ApiClient {
 
   async reviewResource(id: number): Promise<Resource> {
     return this.request<Resource>(`/api/resources/${id}/review`, { method: "POST" });
+  }
+
+  // Tags
+  async getTags(): Promise<Tag[]> {
+    return this.request<Tag[]>("/api/tags");
+  }
+
+  async updateResourceTags(id: number, tagNames: string[]): Promise<Resource> {
+    return this.request<Resource>(`/api/resources/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ tags: tagNames }),
+    });
   }
 
   // Search

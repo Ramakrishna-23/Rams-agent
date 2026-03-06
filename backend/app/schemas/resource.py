@@ -29,6 +29,7 @@ class ResourceUpdate(BaseModel):
     title: str | None = None
     notes: str | None = None
     status: VALID_STATUSES | None = None
+    tags: list[str] | None = None
 
 
 class ResourceOut(BaseModel):

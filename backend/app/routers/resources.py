@@ -15,10 +15,18 @@ from app.schemas.resource import (
     ResourceList,
     ResourceOut,
     ResourceUpdate,
+    TagOut,
 )
 from app.utils.auth import verify_api_key
 
 router = APIRouter(prefix="/api/resources", tags=["resources"], dependencies=[Depends(verify_api_key)])
+router_tags = APIRouter(prefix="/api/tags", tags=["tags"], dependencies=[Depends(verify_api_key)])
+
+
+@router_tags.get("", response_model=list[TagOut])
+async def list_tags(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Tag).order_by(Tag.name))
+    return result.scalars().all()
 
 
 @router.post("", response_model=ResourceOut, status_code=201)
@@ -101,8 +109,22 @@ async def update_resource(
         raise HTTPException(status_code=404, detail="Resource not found")
 
     update_data = data.model_dump(exclude_unset=True)
+    tag_names = update_data.pop("tags", None)
+
     for field, value in update_data.items():
         setattr(resource, field, value)
+
+    if tag_names is not None:
+        resolved_tags = []
+        for name in tag_names:
+            result2 = await db.execute(select(Tag).where(Tag.name == name))
+            tag = result2.scalar_one_or_none()
+            if not tag:
+                tag = Tag(name=name)
+                db.add(tag)
+                await db.flush()
+            resolved_tags.append(tag)
+        resource.tags = resolved_tags
 
     await db.flush()
     await db.refresh(resource)
