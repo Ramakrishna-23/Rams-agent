@@ -198,7 +198,7 @@ export function ResourceDetailPanel({
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="right" className="w-[460px] sm:max-w-[460px] p-0">
+      <SheetContent side="right" className="w-[50vw] sm:max-w-[50vw] p-0">
         {/* Header */}
         <SheetHeader className="border-b px-5 py-4">
           <SheetTitle className="text-base font-semibold leading-snug line-clamp-2">

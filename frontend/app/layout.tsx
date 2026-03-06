@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PasscodeGate } from "@/components/passcode-gate";
+import { KeyboardNav } from "@/components/keyboard-nav";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
           <PasscodeGate>
             <TooltipProvider>
               <SidebarProvider>
+                <KeyboardNav />
                 <AppSidebar />
                 <SidebarInset>
                   <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
