@@ -159,7 +159,7 @@ export default function ActionsPage() {
         </span>
       </div>
 
-      <NewCardSection defaultAction={true} onCreated={fetchAllResources} />
+      <NewCardSection defaultAction={true} onCreated={fetchAllResources} className="xl:w-[calc(60%-0.8rem)] md:w-[calc(66.67%-0.67rem)]" />
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
