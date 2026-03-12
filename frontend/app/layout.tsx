@@ -35,6 +35,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon192.png" />
       </head>
       <body className="antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
         <ThemeProvider>
           <PasscodeGate>
             <TooltipProvider>
