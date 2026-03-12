@@ -1,0 +1,21 @@
+{
+  "name": "Rams",
+  "short_name": "Rams",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    { "src": "/icon192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "share_target": {
+    "action": "/save",
+    "method": "GET",
+    "params": {
+      "url": "url",
+      "text": "text",
+      "title": "title"
+    }
+  }
+}

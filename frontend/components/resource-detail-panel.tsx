@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
+  inbox: "Inbox",
   unread: "Unread",
   read: "Read",
   favorite: "Favorite",
@@ -94,8 +95,10 @@ export function ResourceDetailPanel({
 
   if (!resource) return null;
 
+  const isInbox = resource.status === "inbox";
   const isAction = isActionResource(resource);
-  const statuses = isAction ? ACTION_STATUSES : READING_STATUSES;
+  const allStatuses = ["inbox", ...READING_STATUSES, ...ACTION_STATUSES] as const;
+  const statuses = isInbox ? allStatuses : isAction ? ACTION_STATUSES : READING_STATUSES;
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -189,6 +192,7 @@ export function ResourceDetailPanel({
   );
 
   const domain = (() => {
+    if (!resource.url) return "Note";
     try {
       return new URL(resource.url).hostname.replace("www.", "");
     } catch {
@@ -205,15 +209,21 @@ export function ResourceDetailPanel({
             {resource.title || "Untitled"}
           </SheetTitle>
           <SheetDescription asChild>
-            <a
-              href={resource.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary truncate"
-            >
-              <ExternalLink className="size-3 shrink-0" />
-              {domain}
-            </a>
+            {resource.url ? (
+              <a
+                href={resource.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary truncate"
+              >
+                <ExternalLink className="size-3 shrink-0" />
+                {domain}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                Note
+              </span>
+            )}
           </SheetDescription>
         </SheetHeader>
 

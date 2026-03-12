@@ -29,13 +29,13 @@ Deploy the full Rams Agent stack (FastAPI backend, Next.js frontend, Chrome exte
 ```
          Cloudflare (Free DNS/CDN)
   rams.rambuilds.dev  -->  Railway Frontend (Next.js :3000)
-  api.rams.rambuilds.dev  -->  Railway Backend (FastAPI :8000)
+  api-rams.rambuilds.dev  -->  Railway Backend (FastAPI :8000)
                                     |           |
                               Railway Postgres   Neo4j AuraDB
                               (pgvector)         (Free Tier)
 
     ┌──────────────────┐
-    │ Chrome Extension │──── HTTPS ────► api.rams.rambuilds.dev
+    │ Chrome Extension │──── HTTPS ────► api-rams.rambuilds.dev
     │ (extension-v2)   │
     └──────────────────┘
 
@@ -192,7 +192,7 @@ In Railway dashboard, click **+ New** → **GitHub Repo** → select your repo. 
 
 | Variable | Value |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | `https://api.rams.rambuilds.dev` |
+| `NEXT_PUBLIC_API_URL` | `https://api-rams.rambuilds.dev` |
 | `NEXT_PUBLIC_API_KEY` | Same as backend `API_KEY` |
 
 The `frontend/railway.toml` ensures these are passed as Docker build args automatically.
@@ -219,7 +219,7 @@ In each Railway service's settings, add a custom domain. Railway will give you a
 | Type | Name | Content | Proxy |
 |---|---|---|---|
 | CNAME | `rams` | `<railway-frontend>.up.railway.app` | Proxied |
-| CNAME | `api.rams` | `<railway-backend>.up.railway.app` | Proxied |
+| CNAME | `api-rams` | `<railway-backend>.up.railway.app` | Proxied |
 
 ### 6.4 Configure SSL/TLS
 
@@ -227,7 +227,7 @@ In each Railway service's settings, add a custom domain. Railway will give you a
 
 ### 6.5 Recommended settings
 
-- **Page Rule**: `api.rams.rambuilds.dev/*` → Cache Level: Bypass
+- **Page Rule**: `api-rams.rambuilds.dev/*` → Cache Level: Bypass
 - **Always Use HTTPS**: On
 - **Brotli**: On
 - **Auto Minify**: On
@@ -236,7 +236,7 @@ In each Railway service's settings, add a custom domain. Railway will give you a
 
 ```bash
 dig rams.rambuilds.dev CNAME +short
-dig api.rams.rambuilds.dev CNAME +short
+dig api-rams.rambuilds.dev CNAME +short
 ```
 
 ---
@@ -275,7 +275,7 @@ npm run build
 ### Configure
 
 1. Click the extension icon → Options
-2. Set **Backend URL**: `https://api.rams.rambuilds.dev`
+2. Set **Backend URL**: `https://api-rams.rambuilds.dev`
 3. Set **API Key**: your production API key
 4. Save
 
@@ -296,11 +296,11 @@ The `.github/workflows/ci.yml` workflow runs linting and type checking on push/P
 
 ```bash
 # 1. Backend health
-curl https://api.rams.rambuilds.dev/health
+curl https://api-rams.rambuilds.dev/health
 # {"status":"ok"}
 
 # 2. Backend auth
-curl -H "X-API-Key: YOUR_API_KEY" "https://api.rams.rambuilds.dev/resources?page=1&page_size=1"
+curl -H "X-API-Key: YOUR_API_KEY" "https://api-rams.rambuilds.dev/resources?page=1&page_size=1"
 
 # 3. Frontend
 open https://rams.rambuilds.dev
@@ -308,7 +308,7 @@ open https://rams.rambuilds.dev
 # 4. Chrome extension: save a resource + test search
 
 # 5. Graph stats
-curl -H "X-API-Key: YOUR_API_KEY" https://api.rams.rambuilds.dev/graph/stats
+curl -H "X-API-Key: YOUR_API_KEY" https://api-rams.rambuilds.dev/graph/stats
 ```
 
 ---

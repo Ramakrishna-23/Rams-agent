@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   ListTodo,
   Bot,
+  Inbox,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
+  { title: "Inbox", url: "/inbox", icon: Inbox },
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Actions", url: "/actions", icon: ListTodo },
   { title: "Resources", url: "/resources", icon: BookOpen },

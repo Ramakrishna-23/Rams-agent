@@ -142,15 +142,19 @@ export default function ResourceDetailPage({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               <CardTitle className="text-lg">{resource.title || "Untitled"}</CardTitle>
-              <a
-                href={resource.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-              >
-                <ExternalLink className="size-3" />
-                {resource.url}
-              </a>
+              {resource.url ? (
+                <a
+                  href={resource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="size-3" />
+                  {resource.url}
+                </a>
+              ) : (
+                <span className="text-sm text-muted-foreground">Note</span>
+              )}
             </div>
             <Select value={resource.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-[130px]">

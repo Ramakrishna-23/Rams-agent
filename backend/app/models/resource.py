@@ -23,18 +23,18 @@ class Resource(Base):
     __tablename__ = "resources"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
     title: Mapped[Optional[str]] = mapped_column(String(512))
     scraped_content: Mapped[Optional[str]] = mapped_column(Text)
     summary: Mapped[Optional[str]] = mapped_column(Text)
     notes: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[str] = mapped_column(
         Enum(
-            "unread", "read", "to_review", "archived", "favorite",
+            "inbox", "unread", "read", "to_review", "archived", "favorite",
             "about_to_do", "lets_do", "doing", "done", "archive",
             name="resource_status",
         ),
-        default="unread",
+        default="inbox",
     )
     embedding = Column(Vector(768))
     search_vector = Column(TSVECTOR)

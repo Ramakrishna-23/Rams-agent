@@ -21,7 +21,7 @@ function headers(apiKey: string): HeadersInit {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const { baseUrl, apiKey } = await getConfig();
-  const res = await fetch(`${baseUrl}${path}`, {
+  const res = await fetch(`${baseUrl}/api${path}`, {
     ...options,
     headers: { ...headers(apiKey), ...options?.headers },
   });
@@ -93,7 +93,7 @@ export async function chatStream(
   const body: Record<string, string> = { message };
   if (sessionId) body.session_id = sessionId;
 
-  const res = await fetch(`${baseUrl}/chat`, {
+  const res = await fetch(`${baseUrl}/api/chat`, {
     method: "POST",
     headers: headers(apiKey),
     body: JSON.stringify(body),

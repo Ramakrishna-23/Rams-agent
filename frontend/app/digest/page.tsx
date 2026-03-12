@@ -82,15 +82,19 @@ export default function DigestPage() {
                     <CardTitle className="text-sm leading-snug">
                       {item.resource.title || "Untitled"}
                     </CardTitle>
-                    <a
-                      href={item.resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      <ExternalLink className="size-3" />
-                      {item.resource.url}
-                    </a>
+                    {item.resource.url ? (
+                      <a
+                        href={item.resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        <ExternalLink className="size-3" />
+                        {item.resource.url}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Note</span>
+                    )}
                   </div>
                   <Button
                     size="sm"

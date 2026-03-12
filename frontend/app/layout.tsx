@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rams Agent",
+  title: "Rams",
   description: "AI-powered resource management and learning assistant",
 };
 
@@ -27,6 +27,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={jetbrainsMono.variable} suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Rams" />
+        <link rel="apple-touch-icon" href="/icon192.png" />
+      </head>
       <body className="antialiased">
         <ThemeProvider>
           <PasscodeGate>

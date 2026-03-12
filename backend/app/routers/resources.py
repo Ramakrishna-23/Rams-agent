@@ -36,10 +36,10 @@ async def create_resource(
     db: AsyncSession = Depends(get_db),
 ):
     resource = Resource(
-        url=str(data.url),
+        url=str(data.url) if data.url else None,
         title=data.title,
         notes=data.notes,
-        status="unread",
+        status="inbox",
         next_review_at=datetime.now(timezone.utc) + timedelta(days=1),
     )
     db.add(resource)

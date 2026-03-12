@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, HttpUrl
 
 VALID_STATUSES = Literal[
-    "unread", "read", "to_review", "archived", "favorite",
+    "inbox", "unread", "read", "to_review", "archived", "favorite",
     "about_to_do", "lets_do", "doing", "done", "archive",
 ]
 
@@ -20,7 +20,7 @@ class TagOut(BaseModel):
 
 
 class ResourceCreate(BaseModel):
-    url: HttpUrl
+    url: HttpUrl | None = None
     title: str | None = None
     notes: str | None = None
 
@@ -34,7 +34,7 @@ class ResourceUpdate(BaseModel):
 
 class ResourceOut(BaseModel):
     id: UUID
-    url: str
+    url: str | None
     title: str | None
     summary: str | None
     notes: str | None

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Clock } from "lucide-react";
 
 const statusColors: Record<string, string> = {
+  inbox: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   unread: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   read: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   archived: "bg-muted text-muted-foreground",
@@ -18,6 +19,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
+  inbox: "Inbox",
   about_to_do: "about to do",
   lets_do: "let's do",
   doing: "doing",
@@ -45,6 +47,7 @@ export function ResourceCard({
   onClick,
 }: ResourceCardProps) {
   const domain = (() => {
+    if (!resource.url) return "Note";
     try {
       return new URL(resource.url).hostname.replace("www.", "");
     } catch {

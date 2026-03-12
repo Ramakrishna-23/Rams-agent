@@ -1,11 +1,20 @@
-import { createResource } from "../shared/api-client";
+import { createResource, updateResource } from "../shared/api-client";
 import { HAS_SIDE_PANEL } from "../shared/constants";
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "saveResource") {
-    const { url, title, selectedText, notes } = message.payload;
+    const { url, title, selectedText, notes, isAction, tags } = message.payload;
     createResource(url, title, notes, selectedText)
-      .then((resource) => sendResponse({ success: true, data: resource }))
+      .then((resource) => {
+        const updates: Record<string, unknown> = {};
+        if (isAction) updates.status = "about_to_do";
+        if (tags?.length) updates.tags = tags;
+        if (Object.keys(updates).length) {
+          return updateResource(resource.id, updates)
+            .then((updated) => sendResponse({ success: true, data: updated }));
+        }
+        sendResponse({ success: true, data: resource });
+      })
       .catch((err: Error) =>
         sendResponse({ success: false, error: err.message })
       );

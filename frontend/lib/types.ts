@@ -5,7 +5,7 @@ export interface Tag {
 
 export interface Resource {
   id: number;
-  url: string;
+  url: string | null;
   title: string;
   summary: string;
   notes: string;
@@ -64,4 +64,8 @@ export function isReadingResource(resource: Resource): boolean {
 
 export function isActionResource(resource: Resource): boolean {
   return (ACTION_STATUSES as readonly string[]).includes(resource.status);
+}
+
+export function isInboxResource(resource: Resource): boolean {
+  return resource.status === "inbox";
 }

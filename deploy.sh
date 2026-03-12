@@ -32,7 +32,7 @@ BACKEND_SERVICE="rams-backend"
 FRONTEND_SERVICE="rams-frontend"
 
 FRONTEND_DOMAIN="rams.rambuilds.dev"
-BACKEND_DOMAIN="api.rams.rambuilds.dev"
+BACKEND_DOMAIN="api-rams.rambuilds.dev"
 
 # Parse arguments
 PHASE_ONLY=""

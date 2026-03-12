@@ -23,9 +23,20 @@ export function initSaveTab() {
   root.textContent = "";
 
   const titleLabel = el("div", { className: "field-label" }, "Page Title");
-  const titleEl = el("p", { className: "page-title", id: "save-title" }, "Loading...");
+  const titleEl = document.createElement("input");
+  titleEl.type = "text";
+  titleEl.id = "save-title";
+  titleEl.className = "page-title";
+  titleEl.placeholder = "Page title";
+  titleEl.value = "Loading...";
+
   const urlLabel = el("div", { className: "field-label" }, "URL");
-  const urlEl = el("p", { className: "page-url", id: "save-url" }, "Loading...");
+  const urlEl = document.createElement("input");
+  urlEl.type = "text";
+  urlEl.id = "save-url";
+  urlEl.className = "page-url";
+  urlEl.placeholder = "https://...";
+  urlEl.value = "Loading...";
 
   const selectedSection = el("div", { className: "selected-text-section hidden", id: "save-selected-section" });
   const selectedLabel = el("div", { className: "field-label" }, "Selected Text");
@@ -38,6 +49,67 @@ export function initSaveTab() {
   notesEl.placeholder = "Add any notes...";
   notesEl.rows = 2;
 
+  // Tags input
+  const tagsLabel = el("div", { className: "field-label", style: "margin-top: 8px;" }, "Tags");
+  const tagsContainer = el("div", { className: "tags-input-container" });
+  const tagsChips = el("div", { className: "tags-chips" });
+  const tagInput = document.createElement("input");
+  tagInput.type = "text";
+  tagInput.className = "tag-input";
+  tagInput.placeholder = "Type and press Enter...";
+  const tags: string[] = [];
+
+  tagInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const val = tagInput.value.trim().replace(/,/g, "");
+      if (val && !tags.includes(val)) {
+        tags.push(val);
+        renderTags();
+      }
+      tagInput.value = "";
+    }
+    if (e.key === "Backspace" && !tagInput.value && tags.length) {
+      tags.pop();
+      renderTags();
+    }
+  });
+
+  function renderTags() {
+    tagsChips.textContent = "";
+    tags.forEach((t, i) => {
+      const chip = el("span", { className: "tag-chip" }, t);
+      const removeBtn = el("span", { className: "tag-chip-remove" }, "×");
+      removeBtn.addEventListener("click", () => { tags.splice(i, 1); renderTags(); });
+      chip.appendChild(removeBtn);
+      tagsChips.appendChild(chip);
+    });
+  }
+
+  tagsContainer.append(tagsChips, tagInput);
+  tagsContainer.addEventListener("click", () => tagInput.focus());
+
+  // Action toggle switch
+  let isAction = false;
+  const actionRow = el("div", { className: "action-toggle-row", style: "display: flex; align-items: center; gap: 8px; margin-top: 8px;" });
+  const actionToggle = document.createElement("button");
+  actionToggle.type = "button";
+  actionToggle.className = "toggle-switch";
+  actionToggle.setAttribute("role", "switch");
+  actionToggle.setAttribute("aria-checked", "false");
+  const toggleThumb = el("span", { className: "toggle-thumb" });
+  actionToggle.appendChild(toggleThumb);
+  actionToggle.addEventListener("click", () => {
+    isAction = !isAction;
+    actionToggle.classList.toggle("active", isAction);
+    actionToggle.setAttribute("aria-checked", String(isAction));
+  });
+  const actionLabel = el("span", { className: "field-label" }, "Action");
+  actionLabel.style.margin = "0";
+  actionLabel.style.cursor = "pointer";
+  actionLabel.addEventListener("click", () => actionToggle.click());
+  actionRow.append(actionToggle, actionLabel);
+
   const saveBtn = document.createElement("button");
   saveBtn.id = "save-btn";
   saveBtn.className = "btn btn-primary";
@@ -47,7 +119,11 @@ export function initSaveTab() {
 
   const statusEl = el("div", { className: "status hidden", id: "save-status" });
 
-  root.append(titleLabel, titleEl, urlLabel, urlEl, selectedSection, notesLabel, notesEl, saveBtn, statusEl);
+  root.append(titleLabel, titleEl, urlLabel, urlEl, selectedSection, notesLabel, notesEl, tagsLabel, tagsContainer, actionRow, saveBtn, statusEl);
+
+  urlEl.addEventListener("input", () => {
+    saveBtn.disabled = !urlEl.value.trim();
+  });
 
   loadPageInfo();
 
@@ -74,8 +150,8 @@ export function initSaveTab() {
 
   function render() {
     if (!pageInfo) return;
-    titleEl.textContent = pageInfo.title || "Untitled";
-    urlEl.textContent = pageInfo.url || "";
+    titleEl.value = pageInfo.title || "Untitled";
+    urlEl.value = pageInfo.url || "";
     if (pageInfo.selectedText) {
       selectedEl.textContent = pageInfo.selectedText;
       selectedSection.classList.remove("hidden");
@@ -93,10 +169,12 @@ export function initSaveTab() {
       {
         action: "saveResource",
         payload: {
-          url: pageInfo.url,
-          title: pageInfo.title,
+          url: urlEl.value.trim(),
+          title: titleEl.value.trim(),
           selectedText: pageInfo.selectedText,
           notes: notesEl.value.trim(),
+          isAction,
+          tags,
         },
       },
       (response) => {
