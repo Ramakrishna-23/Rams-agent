@@ -19,10 +19,24 @@ class TagOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SubtaskOut(BaseModel):
+    id: UUID
+    resource_id: UUID
+    title: str
+    is_done: bool
+    sort_order: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ResourceCreate(BaseModel):
     url: HttpUrl | None = None
     title: str | None = None
     notes: str | None = None
+    due_at: datetime | None = None
+    priority: int | None = None
+    recurrence_rule: str | None = None
 
 
 class ResourceUpdate(BaseModel):
@@ -30,6 +44,9 @@ class ResourceUpdate(BaseModel):
     notes: str | None = None
     status: VALID_STATUSES | None = None
     tags: list[str] | None = None
+    due_at: datetime | None = None
+    priority: int | None = None
+    recurrence_rule: str | None = None
 
 
 class ResourceOut(BaseModel):
@@ -40,9 +57,13 @@ class ResourceOut(BaseModel):
     notes: str | None
     status: str
     tags: list[TagOut]
+    subtasks: list[SubtaskOut] = []
     review_count: int
     next_review_at: datetime | None
     last_reviewed_at: datetime | None
+    due_at: datetime | None = None
+    priority: int | None = None
+    recurrence_rule: str | None = None
     created_at: datetime
     updated_at: datetime
 

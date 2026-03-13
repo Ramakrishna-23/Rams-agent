@@ -1,9 +1,9 @@
 "use client";
 
-import { Resource } from "@/lib/types";
+import { Resource, PRIORITY_COLORS } from "@/lib/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Clock } from "lucide-react";
+import { ExternalLink, Clock, Repeat, CheckSquare } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   inbox: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
@@ -55,15 +55,27 @@ export function ResourceCard({
     }
   })();
 
+  const isOverdue = resource.due_at && new Date(resource.due_at) < new Date() && !["done", "archive"].includes(resource.status);
+  const subtasks = resource.subtasks || [];
+  const doneSubtasks = subtasks.filter((s) => s.is_done).length;
+
   return (
     <div onClick={onClick} className={onClick ? "cursor-pointer" : undefined}>
-      <Card className="group h-full transition-colors hover:border-primary/50 hover:bg-accent/50">
+      <Card className={`group h-full transition-colors hover:border-primary/50 hover:bg-accent/50 ${isOverdue ? "border-red-500/50" : ""}`}>
         <CardHeader className={compact ? "p-3 pb-1" : "pb-2"}>
           <div className="flex items-start justify-between gap-2">
-            <h3 className={`font-medium leading-snug line-clamp-2 ${compact ? "text-xs" : "text-sm"}`}>
-              {resource.title || "Untitled"}
-            </h3>
+            <div className="flex items-center gap-1.5 min-w-0">
+              {resource.priority && (
+                <span className={`size-2 rounded-full shrink-0 ${PRIORITY_COLORS[resource.priority] || ""}`} />
+              )}
+              <h3 className={`font-medium leading-snug line-clamp-2 ${compact ? "text-xs" : "text-sm"}`}>
+                {resource.title || "Untitled"}
+              </h3>
+            </div>
             <div className="flex items-center gap-1.5 shrink-0">
+              {resource.recurrence_rule && (
+                <Repeat className="size-3 text-muted-foreground" />
+              )}
               <Badge
                 variant="outline"
                 className={`text-[10px] ${statusColors[resource.status] || ""}`}
@@ -72,9 +84,22 @@ export function ResourceCard({
               </Badge>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <ExternalLink className="size-3" />
-            <span className="truncate">{domain}</span>
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1 min-w-0">
+              <ExternalLink className="size-3 shrink-0" />
+              <span className="truncate">{domain}</span>
+            </div>
+            {resource.due_at && (
+              <span className={`shrink-0 px-1 py-0.5 rounded text-[10px] ${isOverdue ? "bg-red-500/10 text-red-500" : "bg-muted"}`}>
+                {new Date(resource.due_at).toLocaleDateString()}
+              </span>
+            )}
+            {subtasks.length > 0 && (
+              <span className="shrink-0 flex items-center gap-0.5 text-[10px]">
+                <CheckSquare className="size-3" />
+                {doneSubtasks}/{subtasks.length}
+              </span>
+            )}
           </div>
         </CardHeader>
         <CardContent className={compact ? "p-3 pt-0" : "pt-0"}>

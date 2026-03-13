@@ -148,7 +148,19 @@ export default function ActionsPage() {
   const actionResources = resources.filter(isActionResource);
 
   const getColumnResources = (status: string) =>
-    actionResources.filter((r) => r.status === status);
+    actionResources
+      .filter((r) => r.status === status)
+      .sort((a, b) => {
+        // Sort by priority first (lower number = higher priority), nulls last
+        const pa = a.priority ?? 99;
+        const pb = b.priority ?? 99;
+        if (pa !== pb) return pa - pb;
+        // Then by due date (sooner first), nulls last
+        if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+        if (a.due_at) return -1;
+        if (b.due_at) return 1;
+        return 0;
+      });
 
   return (
     <div className="space-y-6">

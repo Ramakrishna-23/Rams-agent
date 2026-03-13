@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationToggle } from "@/components/notification-toggle";
 import { PasscodeGate } from "@/components/passcode-gate";
 import { KeyboardNav } from "@/components/keyboard-nav";
 
@@ -56,7 +57,8 @@ export default function RootLayout({
                     <span className="text-sm font-medium text-muted-foreground">
                       Rams Agent
                     </span>
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-1">
+                      <NotificationToggle />
                       <ThemeToggle />
                     </div>
                   </header>

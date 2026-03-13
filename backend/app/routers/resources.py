@@ -113,6 +113,7 @@ async def update_resource(
     update_data = data.model_dump(exclude_unset=True)
     tag_names = update_data.pop("tags", None)
 
+    old_status = resource.status
     for field, value in update_data.items():
         setattr(resource, field, value)
 
@@ -128,9 +129,57 @@ async def update_resource(
             resolved_tags.append(tag)
         resource.tags = resolved_tags
 
+    # Recurring task logic: when moved to "done" and has recurrence_rule
+    new_status = update_data.get("status")
+    if new_status == "done" and old_status != "done" and resource.recurrence_rule:
+        next_due = _calculate_next_due(resource.due_at, resource.recurrence_rule)
+        # Copy tag names before creating new resource
+        copy_tag_names = [t.name for t in resource.tags]
+        new_resource = Resource(
+            title=resource.title,
+            notes=resource.notes,
+            status="about_to_do",
+            priority=resource.priority,
+            recurrence_rule=resource.recurrence_rule,
+            due_at=next_due,
+            next_review_at=datetime.now(timezone.utc) + timedelta(days=1),
+        )
+        db.add(new_resource)
+        await db.flush()
+        # Copy tags to new resource
+        if copy_tag_names:
+            new_tags = []
+            for name in copy_tag_names:
+                tag_result = await db.execute(select(Tag).where(Tag.name == name))
+                tag_obj = tag_result.scalar_one_or_none()
+                if tag_obj:
+                    new_tags.append(tag_obj)
+            new_resource.tags = new_tags
+
     await db.flush()
     await db.refresh(resource)
     return resource
+
+
+def _calculate_next_due(current_due: datetime | None, rule: str) -> datetime:
+    """Calculate next due date based on recurrence rule."""
+    base = current_due or datetime.now(timezone.utc)
+    if rule == "daily":
+        return base + timedelta(days=1)
+    elif rule == "weekdays":
+        next_day = base + timedelta(days=1)
+        while next_day.weekday() >= 5:  # Skip Saturday (5) and Sunday (6)
+            next_day += timedelta(days=1)
+        return next_day
+    elif rule == "weekly":
+        return base + timedelta(weeks=1)
+    elif rule == "monthly":
+        # Move forward ~30 days, land on same day-of-month
+        month = base.month % 12 + 1
+        year = base.year + (1 if base.month == 12 else 0)
+        day = min(base.day, 28)  # Safe day
+        return base.replace(year=year, month=month, day=day)
+    return base + timedelta(days=1)
 
 
 @router.delete("/{resource_id}", status_code=204)
@@ -182,8 +231,9 @@ async def quick_save(
     db: AsyncSession = Depends(get_db),
 ):
     """Save a URL to inbox via GET request. Designed for Apple Shortcuts."""
+    from urllib.parse import unquote
     settings = get_settings()
-    if key != settings.api_key:
+    if unquote(key) != settings.api_key:
         raise HTTPException(status_code=403, detail="Invalid key")
 
     resource = Resource(

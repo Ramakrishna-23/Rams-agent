@@ -3,6 +3,15 @@ export interface Tag {
   name: string;
 }
 
+export interface Subtask {
+  id: string;
+  resource_id: string;
+  title: string;
+  is_done: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface Resource {
   id: number;
   url: string | null;
@@ -11,11 +20,31 @@ export interface Resource {
   notes: string;
   status: string;
   tags: Tag[];
+  subtasks: Subtask[];
   review_count: number;
   next_review_at: string | null;
+  due_at: string | null;
+  priority: number | null;
+  recurrence_rule: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export const PRIORITY_LABELS: Record<number, string> = {
+  1: "Urgent",
+  2: "High",
+  3: "Medium",
+  4: "Low",
+};
+
+export const PRIORITY_COLORS: Record<number, string> = {
+  1: "bg-red-500",
+  2: "bg-orange-500",
+  3: "bg-blue-500",
+  4: "bg-gray-400",
+};
+
+export const RECURRENCE_OPTIONS = ["daily", "weekdays", "weekly", "monthly"] as const;
 
 export interface ChatSession {
   id: string;

@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     neo4j_password: str = ""
     neo4j_database: str = "neo4j"
 
+    # VAPID push notifications (optional)
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_email: str = "mailto:admin@example.com"
+
     # CORS
     allowed_origins: list[str] = ["http://localhost:3000", "chrome-extension://*"]
 

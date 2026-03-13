@@ -11,9 +11,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import get_settings
 from app.database import Base
-from app.models.resource import Resource, Tag  # noqa: F401
+from app.models.resource import Resource, Tag, Subtask  # noqa: F401
 from app.models.chat import ChatSession, ChatMessage  # noqa: F401
 from app.models.reminder import Reminder  # noqa: F401
+from app.models.push_subscription import PushSubscription  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

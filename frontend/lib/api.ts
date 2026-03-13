@@ -1,4 +1,4 @@
-import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem } from "./types";
+import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem, Subtask } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
@@ -137,6 +137,45 @@ class ApiClient {
 
   async deleteReminder(id: number): Promise<void> {
     await this.request<void>(`/api/reminders/${id}`, { method: "DELETE" });
+  }
+
+  // Subtasks
+  async createSubtask(resourceId: number, title: string, sortOrder = 0): Promise<Subtask> {
+    return this.request<Subtask>(`/api/resources/${resourceId}/subtasks`, {
+      method: "POST",
+      body: JSON.stringify({ title, sort_order: sortOrder }),
+    });
+  }
+
+  async updateSubtask(id: string, data: Partial<Pick<Subtask, "title" | "is_done" | "sort_order">>): Promise<Subtask> {
+    return this.request<Subtask>(`/api/subtasks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteSubtask(id: string): Promise<void> {
+    await this.request<void>(`/api/subtasks/${id}`, { method: "DELETE" });
+  }
+
+  // Push notifications
+  async subscribePush(subscription: { endpoint: string; p256dh_key: string; auth_key: string }): Promise<void> {
+    await this.request<void>("/api/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+    });
+  }
+
+  async unsubscribePush(endpoint: string): Promise<void> {
+    await this.request<void>("/api/push/unsubscribe", {
+      method: "POST",
+      body: JSON.stringify({ endpoint, p256dh_key: "", auth_key: "" }),
+    });
+  }
+
+  async getVapidPublicKey(): Promise<string> {
+    const res = await this.request<{ public_key: string }>("/api/push/vapid-public-key");
+    return res.public_key;
   }
 }
 

@@ -4,9 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import {
   Resource,
   Tag,
+  Subtask,
   READING_STATUSES,
   ACTION_STATUSES,
   isActionResource,
+  PRIORITY_LABELS,
+  PRIORITY_COLORS,
+  RECURRENCE_OPTIONS,
 } from "@/lib/types";
 import { api } from "@/lib/api";
 import {
@@ -45,6 +49,10 @@ import {
   TagIcon,
   Plus,
   X,
+  Flag,
+  CalendarDays,
+  Repeat,
+  CheckSquare,
 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
@@ -79,6 +87,7 @@ export function ResourceDetailPanel({
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [tagSearch, setTagSearch] = useState("");
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -175,6 +184,72 @@ export function ResourceDetailPanel({
       onResourceUpdate();
     } catch (err) {
       console.error("Failed to remove tag:", err);
+    }
+  };
+
+  const handlePriorityChange = async (value: string) => {
+    const priority = value === "none" ? null : parseInt(value);
+    try {
+      await api.updateResource(resource.id, { priority } as any);
+      onResourceUpdate();
+    } catch (err) {
+      console.error("Failed to update priority:", err);
+    }
+  };
+
+  const handleDueDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const due_at = e.target.value ? new Date(e.target.value).toISOString() : null;
+    try {
+      await api.updateResource(resource.id, { due_at } as any);
+      onResourceUpdate();
+    } catch (err) {
+      console.error("Failed to update due date:", err);
+    }
+  };
+
+  const handleRecurrenceChange = async (value: string) => {
+    const recurrence_rule = value === "none" ? null : value;
+    try {
+      await api.updateResource(resource.id, { recurrence_rule } as any);
+      onResourceUpdate();
+    } catch (err) {
+      console.error("Failed to update recurrence:", err);
+    }
+  };
+
+  const handleAddSubtask = async () => {
+    if (!newSubtaskTitle.trim()) return;
+    try {
+      await api.createSubtask(resource.id, newSubtaskTitle.trim(), (resource.subtasks?.length || 0));
+      setNewSubtaskTitle("");
+      onResourceUpdate();
+    } catch (err) {
+      console.error("Failed to add subtask:", err);
+    }
+  };
+
+  const handleToggleSubtask = async (subtask: Subtask) => {
+    try {
+      await api.updateSubtask(subtask.id, { is_done: !subtask.is_done });
+      onResourceUpdate();
+    } catch (err) {
+      console.error("Failed to toggle subtask:", err);
+    }
+  };
+
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    try {
+      await api.deleteSubtask(subtaskId);
+      onResourceUpdate();
+    } catch (err) {
+      console.error("Failed to delete subtask:", err);
+    }
+  };
+
+  const handleSubtaskKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSubtask();
     }
   };
 
@@ -335,6 +410,82 @@ export function ResourceDetailPanel({
                   </Popover>
                 </div>
               </div>
+
+              {/* Priority Row */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground w-24 shrink-0">
+                  <Flag className="size-4" />
+                  <span>Priority</span>
+                </div>
+                <div className="flex-1">
+                  <Select
+                    value={resource.priority ? String(resource.priority) : "none"}
+                    onValueChange={handlePriorityChange}
+                  >
+                    <SelectTrigger className="h-8 text-xs border-0 bg-transparent shadow-none hover:bg-accent/50 -ml-2 px-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="1">
+                        <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-red-500" /> Urgent</span>
+                      </SelectItem>
+                      <SelectItem value="2">
+                        <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-orange-500" /> High</span>
+                      </SelectItem>
+                      <SelectItem value="3">
+                        <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-blue-500" /> Medium</span>
+                      </SelectItem>
+                      <SelectItem value="4">
+                        <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-gray-400" /> Low</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Due Date Row */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground w-24 shrink-0">
+                  <CalendarDays className="size-4" />
+                  <span>Due</span>
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="datetime-local"
+                    value={resource.due_at ? new Date(resource.due_at).toISOString().slice(0, 16) : ""}
+                    onChange={handleDueDateChange}
+                    className="h-8 text-xs bg-transparent border-0 hover:bg-accent/50 rounded-md px-2 w-full outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Recurrence Row */}
+              {isAction && (
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground w-24 shrink-0">
+                    <Repeat className="size-4" />
+                    <span>Repeat</span>
+                  </div>
+                  <div className="flex-1">
+                    <Select
+                      value={resource.recurrence_rule || "none"}
+                      onValueChange={handleRecurrenceChange}
+                    >
+                      <SelectTrigger className="h-8 text-xs border-0 bg-transparent shadow-none hover:bg-accent/50 -ml-2 px-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekdays">Weekdays</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Summary */}
@@ -368,6 +519,61 @@ export function ResourceDetailPanel({
               >
                 {saving ? "Saving..." : "Save Notes"}
               </Button>
+            </div>
+
+            {/* Subtasks */}
+            <Separator className="my-4" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="size-3.5 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground">
+                  Subtasks
+                  {resource.subtasks?.length > 0 && (
+                    <span className="ml-1">
+                      ({resource.subtasks.filter((s) => s.is_done).length}/{resource.subtasks.length})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="space-y-1">
+                {(resource.subtasks || []).map((subtask) => (
+                  <div key={subtask.id} className="flex items-center gap-2 group">
+                    <input
+                      type="checkbox"
+                      checked={subtask.is_done}
+                      onChange={() => handleToggleSubtask(subtask)}
+                      className="size-4 rounded border-border accent-primary cursor-pointer"
+                    />
+                    <span className={`flex-1 text-sm ${subtask.is_done ? "line-through text-muted-foreground" : ""}`}>
+                      {subtask.title}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteSubtask(subtask.id)}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-muted transition-all"
+                    >
+                      <X className="size-3 text-muted-foreground" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newSubtaskTitle}
+                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                  onKeyDown={handleSubtaskKeyDown}
+                  placeholder="Add subtask..."
+                  className="h-7 text-xs flex-1"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleAddSubtask}
+                  disabled={!newSubtaskTitle.trim()}
+                  className="h-7 px-2"
+                >
+                  <Plus className="size-3" />
+                </Button>
+              </div>
             </div>
 
             {/* Meta */}
