@@ -17,10 +17,12 @@ from app.schemas.resource import (
     ResourceUpdate,
     TagOut,
 )
+from app.config import get_settings
 from app.utils.auth import verify_api_key
 
 router = APIRouter(prefix="/api/resources", tags=["resources"], dependencies=[Depends(verify_api_key)])
 router_tags = APIRouter(prefix="/api/tags", tags=["tags"], dependencies=[Depends(verify_api_key)])
+router_quick = APIRouter(prefix="/api", tags=["quick-save"])
 
 
 @router_tags.get("", response_model=list[TagOut])
@@ -170,3 +172,27 @@ async def review_resource(resource_id: uuid.UUID, db: AsyncSession = Depends(get
     await db.flush()
     await db.refresh(resource)
     return resource
+
+
+@router_quick.get("/quick-save")
+async def quick_save(
+    url: str = Query(...),
+    title: str = Query(default=""),
+    key: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Save a URL to inbox via GET request. Designed for Apple Shortcuts."""
+    settings = get_settings()
+    if key != settings.api_key:
+        raise HTTPException(status_code=403, detail="Invalid key")
+
+    resource = Resource(
+        url=url,
+        title=title or None,
+        status="inbox",
+        next_review_at=datetime.now(timezone.utc) + timedelta(days=1),
+    )
+    db.add(resource)
+    await db.flush()
+    await db.refresh(resource)
+    return {"saved": True, "title": resource.title or url, "id": str(resource.id)}

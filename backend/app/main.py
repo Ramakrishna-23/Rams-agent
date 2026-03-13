@@ -36,6 +36,7 @@ app.add_middleware(
 
 app.include_router(resources.router)
 app.include_router(resources.router_tags)
+app.include_router(resources.router_quick)
 app.include_router(chat.router)
 app.include_router(search.router)
 app.include_router(reminders.router)
