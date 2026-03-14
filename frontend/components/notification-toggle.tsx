@@ -65,7 +65,7 @@ export function NotificationToggle() {
         }
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+          applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
         });
         const key = sub.getKey("p256dh");
         const auth = sub.getKey("auth");
