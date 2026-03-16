@@ -1,7 +1,5 @@
 import { initTheme } from "../shared/theme";
 import { initSaveTab } from "./components/save-tab";
-import { initSearchTab } from "./components/search-tab";
-import { initDigestTab } from "./components/digest-tab";
 import { initActionsTab } from "./components/actions-tab";
 import "./popup.css";
 
@@ -39,7 +37,5 @@ document.getElementById("settingsBtn")?.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initSaveTab();
-  initSearchTab();
-  initDigestTab();
   initActionsTab();
 });

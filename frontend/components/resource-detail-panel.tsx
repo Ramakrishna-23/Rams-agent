@@ -14,12 +14,12 @@ import {
 } from "@/lib/types";
 import { api } from "@/lib/api";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -276,14 +276,14 @@ export function ResourceDetailPanel({
   })();
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="right" className="w-[50vw] sm:max-w-[50vw] p-0">
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl w-full p-0 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle className="text-base font-semibold leading-snug line-clamp-2">
+        <DialogHeader className="border-b px-5 py-4">
+          <DialogTitle className="text-base font-semibold leading-snug line-clamp-2">
             {resource.title || "Untitled"}
-          </SheetTitle>
-          <SheetDescription asChild>
+          </DialogTitle>
+          <DialogDescription asChild>
             {resource.url ? (
               <a
                 href={resource.url}
@@ -299,10 +299,10 @@ export function ResourceDetailPanel({
                 Note
               </span>
             )}
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <ScrollArea className="flex-1 h-[calc(100vh-80px)]">
+        <ScrollArea className="flex-1 overflow-auto max-h-[calc(90vh-80px)]">
           <div className="p-5 space-y-0">
             {/* Property Rows */}
             <div className="rounded-lg border divide-y">
@@ -622,7 +622,7 @@ export function ResourceDetailPanel({
             </div>
           </div>
         </ScrollArea>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
