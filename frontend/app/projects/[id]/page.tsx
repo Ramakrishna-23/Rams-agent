@@ -96,9 +96,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<PagePara
     }
   };
 
-  const handleCardClick = (resource: Resource) => {
-    setSelectedResource(resource);
-    setPanelOpen(true);
+  const handleCardClick = async (resource: Resource) => {
+    try {
+      const full = await api.getResource(resource.id);
+      setSelectedResource(full);
+      setPanelOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch resource:", err);
+    }
   };
 
   const handleResourceUpdate = () => {
