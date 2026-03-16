@@ -55,7 +55,6 @@ import {
   Repeat,
   CheckSquare,
   FolderKanban,
-  MessageSquare,
 } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
@@ -92,8 +91,6 @@ export function ResourceDetailPanel({
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [newComment, setNewComment] = useState("");
-  const [addingComment, setAddingComment] = useState(false);
   const tagInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -281,28 +278,6 @@ export function ResourceDetailPanel({
     }
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    setAddingComment(true);
-    try {
-      await api.createComment(resource.id, newComment.trim());
-      setNewComment("");
-      onResourceUpdate();
-    } catch (err) {
-      console.error("Failed to add comment:", err);
-    } finally {
-      setAddingComment(false);
-    }
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      await api.deleteComment(commentId);
-      onResourceUpdate();
-    } catch (err) {
-      console.error("Failed to delete comment:", err);
-    }
-  };
 
   const filteredTags = allTags.filter(
     (t) =>
@@ -586,53 +561,6 @@ export function ResourceDetailPanel({
               </Button>
             </div>
 
-            {/* Comments */}
-            <Separator className="my-4" />
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="size-3.5 text-muted-foreground" />
-                <p className="text-xs font-medium text-muted-foreground">
-                  Comments
-                  {(resource.comments?.length ?? 0) > 0 && (
-                    <span className="ml-1">({resource.comments.length})</span>
-                  )}
-                </p>
-              </div>
-              <div className="space-y-2">
-                {(resource.comments || []).map((c) => (
-                  <div key={c.id} className="flex gap-2 group">
-                    <div className="flex-1 text-sm bg-muted/50 rounded-md px-3 py-2">
-                      <p className="text-sm">{c.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(c.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteComment(c.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-all self-start mt-1"
-                    >
-                      <X className="size-3 text-muted-foreground" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="min-h-[60px] text-sm resize-none"
-                />
-              </div>
-              <Button
-                size="sm"
-                onClick={handleAddComment}
-                disabled={addingComment || !newComment.trim()}
-                className="text-xs"
-              >
-                {addingComment ? "Adding..." : "Add Comment"}
-              </Button>
-            </div>
 
             {/* Subtasks */}
             <Separator className="my-4" />
