@@ -7,6 +7,7 @@ import { Project } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -175,9 +176,20 @@ export default function ProjectsPage() {
                     {project.description}
                   </p>
                 )}
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {project.resource_count} {project.resource_count === 1 ? "task" : "tasks"}
-                </p>
+                <div className="mt-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{project.done_count}/{project.resource_count} tasks done</span>
+                    <span>
+                      {project.resource_count > 0
+                        ? Math.round((project.done_count / project.resource_count) * 100)
+                        : 0}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={project.resource_count > 0 ? (project.done_count / project.resource_count) * 100 : 0}
+                    className="h-1.5"
+                  />
+                </div>
               </div>
             </Link>
           ))}

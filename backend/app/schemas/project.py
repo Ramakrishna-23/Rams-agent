@@ -59,6 +59,7 @@ class ProjectOut(BaseModel):
     description: str | None
     color: str | None
     resource_count: int
+    done_count: int
     created_at: datetime
     updated_at: datetime
 

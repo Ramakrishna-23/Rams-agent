@@ -25,6 +25,7 @@ export interface Project {
   description: string | null;
   color: string | null;
   resource_count: number;
+  done_count: number;
   created_at: string;
   updated_at: string;
 }

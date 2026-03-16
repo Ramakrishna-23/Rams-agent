@@ -30,6 +30,7 @@ def _to_project_out(p: Project) -> ProjectOut:
         description=p.description,
         color=p.color,
         resource_count=len(p.resources),
+        done_count=sum(1 for r in p.resources if r.status in ("done", "archive")),
         created_at=p.created_at,
         updated_at=p.updated_at,
     )
