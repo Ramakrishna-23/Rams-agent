@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { Resource, isActionResource } from "@/lib/types";
+import { Resource, Project, isActionResource } from "@/lib/types";
 import { ResourceCard } from "@/components/resource-card";
 import { ResourceDetailPanel } from "@/components/resource-detail-panel";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,6 +64,7 @@ const columns: KanbanColumn[] = [
 
 export default function ActionsPage() {
   const [resources, setResources] = useState<Resource[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [draggedResource, setDraggedResource] = useState<Resource | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export default function ActionsPage() {
 
   useEffect(() => {
     fetchAllResources();
+    api.getProjects().then(setProjects).catch(() => {});
   }, [fetchAllResources]);
 
   const handleDragStart = (resource: Resource) => {
@@ -209,20 +211,25 @@ export default function ActionsPage() {
                       No items
                     </div>
                   ) : (
-                    colResources.map((resource) => (
-                      <div
-                        key={resource.id}
-                        draggable
-                        onDragStart={() => handleDragStart(resource)}
-                        className="cursor-grab active:cursor-grabbing"
-                      >
-                        <ResourceCard
-                          resource={resource}
-                          compact
-                          onClick={() => handleCardClick(resource)}
-                        />
-                      </div>
-                    ))
+                    colResources.map((resource) => {
+                      const proj = resource.project_id ? projects.find((p) => p.id === resource.project_id) : undefined;
+                      return (
+                        <div
+                          key={resource.id}
+                          draggable
+                          onDragStart={() => handleDragStart(resource)}
+                          className="cursor-grab active:cursor-grabbing"
+                        >
+                          <ResourceCard
+                            resource={resource}
+                            compact
+                            onClick={() => handleCardClick(resource)}
+                            projectName={proj?.name}
+                            projectColor={proj?.color ?? undefined}
+                          />
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </ScrollArea>

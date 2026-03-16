@@ -39,12 +39,16 @@ interface ResourceCardProps {
   resource: Resource;
   compact?: boolean;
   onClick?: () => void;
+  projectName?: string;
+  projectColor?: string;
 }
 
 export function ResourceCard({
   resource,
   compact,
   onClick,
+  projectName,
+  projectColor,
 }: ResourceCardProps) {
   const domain = (() => {
     if (!resource.url) return "Note";
@@ -124,6 +128,15 @@ export function ResourceCard({
               </span>
             )}
           </div>
+          {projectName && (
+            <div className="mt-1.5 flex items-center gap-1 text-[10px]">
+              <span
+                className="size-2 rounded-full shrink-0"
+                style={{ backgroundColor: projectColor ?? "#6497D6" }}
+              />
+              <span className="truncate text-muted-foreground">{projectName}</span>
+            </div>
+          )}
           {!compact && (
             <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
               <Clock className="size-3" />

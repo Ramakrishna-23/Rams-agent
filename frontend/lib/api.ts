@@ -1,4 +1,4 @@
-import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem, Subtask } from "./types";
+import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem, Subtask, Project, ProjectWithResources, Comment } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
@@ -49,14 +49,14 @@ class ApiClient {
     return this.request<Resource>(`/api/resources/${id}`);
   }
 
-  async createResource(url: string, title?: string, notes?: string): Promise<Resource> {
+  async createResource(url: string | null, title?: string, notes?: string): Promise<Resource> {
     return this.request<Resource>("/api/resources", {
       method: "POST",
-      body: JSON.stringify({ url, title, notes }),
+      body: JSON.stringify({ url: url || null, title, notes }),
     });
   }
 
-  async createAction(url: string, title?: string, notes?: string): Promise<Resource> {
+  async createAction(url: string | null, title?: string, notes?: string): Promise<Resource> {
     const resource = await this.createResource(url, title, notes);
     return this.updateResource(resource.id, { status: "about_to_do" });
   }
@@ -156,6 +156,49 @@ class ApiClient {
 
   async deleteSubtask(id: string): Promise<void> {
     await this.request<void>(`/api/subtasks/${id}`, { method: "DELETE" });
+  }
+
+  // Projects
+  async getProjects(): Promise<Project[]> {
+    return this.request<Project[]>("/api/projects");
+  }
+
+  async getProject(id: string): Promise<ProjectWithResources> {
+    return this.request<ProjectWithResources>(`/api/projects/${id}`);
+  }
+
+  async createProject(data: { name: string; description?: string; color?: string }): Promise<Project> {
+    return this.request<Project>("/api/projects", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProject(id: string, data: Partial<Pick<Project, "name" | "description" | "color">>): Promise<Project> {
+    return this.request<Project>(`/api/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    await this.request<void>(`/api/projects/${id}`, { method: "DELETE" });
+  }
+
+  // Comments
+  async getComments(resourceId: string): Promise<Comment[]> {
+    return this.request<Comment[]>(`/api/resources/${resourceId}/comments`);
+  }
+
+  async createComment(resourceId: string | number, content: string): Promise<Comment> {
+    return this.request<Comment>(`/api/resources/${resourceId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    await this.request<void>(`/api/comments/${commentId}`, { method: "DELETE" });
   }
 
   // Push notifications

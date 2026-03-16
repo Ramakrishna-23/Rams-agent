@@ -12,6 +12,27 @@ export interface Subtask {
   created_at: string;
 }
 
+export interface Comment {
+  id: string;
+  resource_id: string;
+  content: string;
+  created_at: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  resource_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectWithResources extends Project {
+  resources: Resource[];
+}
+
 export interface Resource {
   id: number;
   url: string | null;
@@ -21,11 +42,13 @@ export interface Resource {
   status: string;
   tags: Tag[];
   subtasks: Subtask[];
+  comments: Comment[];
   review_count: number;
   next_review_at: string | null;
   due_at: string | null;
   priority: number | null;
   recurrence_rule: string | null;
+  project_id: string | null;
   created_at: string;
   updated_at: string;
 }

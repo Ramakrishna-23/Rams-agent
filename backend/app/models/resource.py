@@ -53,8 +53,17 @@ class Resource(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+    )
+
     tags: Mapped[List["Tag"]] = relationship(secondary=resource_tags, back_populates="resources", lazy="selectin")
     subtasks: Mapped[List["Subtask"]] = relationship(back_populates="resource", lazy="selectin", cascade="all, delete-orphan", order_by="Subtask.sort_order")
+    project: Mapped[Optional["Project"]] = relationship("Project", back_populates="resources", lazy="selectin")
+    comments: Mapped[List["ResourceComment"]] = relationship(
+        "ResourceComment", back_populates="resource", lazy="selectin",
+        cascade="all, delete-orphan", order_by="ResourceComment.created_at"
+    )
 
     __table_args__ = (
         Index("ix_resources_status", "status"),

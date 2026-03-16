@@ -5,6 +5,7 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, HttpUrl
+from app.schemas.project import CommentOut
 
 VALID_STATUSES = Literal[
     "inbox", "unread", "read", "to_review", "archived", "favorite",
@@ -47,6 +48,7 @@ class ResourceUpdate(BaseModel):
     due_at: datetime | None = None
     priority: int | None = None
     recurrence_rule: str | None = None
+    project_id: UUID | None = None
 
 
 class ResourceOut(BaseModel):
@@ -58,12 +60,14 @@ class ResourceOut(BaseModel):
     status: str
     tags: list[TagOut]
     subtasks: list[SubtaskOut] = []
+    comments: list[CommentOut] = []
     review_count: int
     next_review_at: datetime | None
     last_reviewed_at: datetime | None
     due_at: datetime | None = None
     priority: int | None = None
     recurrence_rule: str | None = None
+    project_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 

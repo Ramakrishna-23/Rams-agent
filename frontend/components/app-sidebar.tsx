@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   ListTodo,
   Inbox,
+  FolderKanban,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -30,6 +31,7 @@ const navItems = [
   { title: "Inbox", url: "/inbox", icon: Inbox },
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Actions", url: "/actions", icon: ListTodo },
+  { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Digest", url: "/digest", icon: CalendarCheck },
