@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -23,6 +24,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { api } from "@/lib/api";
 
 const navItems = [
   { title: "Inbox", url: "/inbox", icon: Inbox },
@@ -35,6 +37,17 @@ const navItems = [
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const [counts, setCounts] = useState({ inbox: 0, read: 0, doing: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      api.getResources(1, "inbox"),
+      api.getResources(1, "read"),
+      api.getResources(1, "doing"),
+    ]).then(([inbox, read, doing]) => {
+      setCounts({ inbox: inbox.total, read: read.total, doing: doing.total });
+    }).catch(() => {});
+  }, []);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -74,6 +87,21 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <Link href={item.url}>
                     <item.icon />
                     <span>{item.title}</span>
+                    {item.title === "Inbox" && counts.inbox > 0 && (
+                      <span className="ml-auto text-xs font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center group-data-[collapsible=icon]:hidden">
+                        {counts.inbox}
+                      </span>
+                    )}
+                    {item.title === "Dashboard" && counts.read > 0 && (
+                      <span className="ml-auto text-xs font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center group-data-[collapsible=icon]:hidden">
+                        {counts.read}
+                      </span>
+                    )}
+                    {item.title === "Actions" && counts.doing > 0 && (
+                      <span className="ml-auto text-xs font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center group-data-[collapsible=icon]:hidden">
+                        {counts.doing}
+                      </span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
