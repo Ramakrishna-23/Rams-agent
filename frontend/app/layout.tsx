@@ -19,6 +19,13 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Rams",
   description: "AI-powered resource management and learning assistant",
+  icons: {
+    icon: [
+      { url: "/icon192.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: "/icon192.png",
+  },
 };
 
 export default function RootLayout({
