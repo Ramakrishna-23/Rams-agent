@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
-import { DigestItem } from "@/lib/types";
+import { Resource } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function DigestPage() {
-  const [items, setItems] = useState<DigestItem[]>([]);
+  const [items, setItems] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState<number | null>(null);
 
@@ -38,7 +38,7 @@ export default function DigestPage() {
     setReviewing(resourceId);
     try {
       await api.reviewResource(resourceId);
-      setItems((prev) => prev.filter((item) => item.resource.id !== resourceId));
+      setItems((prev) => prev.filter((item) => item.id !== resourceId));
     } catch (err) {
       console.error("Failed to review:", err);
     } finally {
@@ -75,22 +75,22 @@ export default function DigestPage() {
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <Card key={item.resource.id}>
+            <Card key={item.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 space-y-1">
                     <CardTitle className="text-sm leading-snug">
-                      {item.resource.title || "Untitled"}
+                      {item.title || "Untitled"}
                     </CardTitle>
-                    {item.resource.url ? (
+                    {item.url ? (
                       <a
-                        href={item.resource.url}
+                        href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                       >
                         <ExternalLink className="size-3" />
-                        {item.resource.url}
+                        {item.url}
                       </a>
                     ) : (
                       <span className="text-xs text-muted-foreground">Note</span>
@@ -99,10 +99,10 @@ export default function DigestPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleReview(item.resource.id)}
-                    disabled={reviewing === item.resource.id}
+                    onClick={() => handleReview(item.id)}
+                    disabled={reviewing === item.id}
                   >
-                    {reviewing === item.resource.id ? (
+                    {reviewing === item.id ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <CheckCircle2 className="size-4" />
@@ -112,14 +112,11 @@ export default function DigestPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {item.resource.summary && (
+                {item.summary && (
                   <p className="text-xs text-muted-foreground line-clamp-2">
-                    {item.resource.summary}
+                    {item.summary}
                   </p>
                 )}
-                <p className="text-xs italic text-muted-foreground/70">
-                  {item.reason}
-                </p>
               </CardContent>
             </Card>
           ))}

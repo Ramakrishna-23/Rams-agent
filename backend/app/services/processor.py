@@ -20,17 +20,23 @@ async def process_resource(resource_id: str):
             return
 
         try:
-            # 1. Scrape
-            scraped = await scrape_url(resource.url)
-            resource.scraped_content = scraped["content"]
-            if not resource.title and scraped["title"]:
-                resource.title = scraped["title"]
+            # 1. Scrape (or use title/notes for URL-less tasks)
+            if resource.url:
+                scraped = await scrape_url(resource.url)
+                resource.scraped_content = scraped["content"]
+                if not resource.title and scraped["title"]:
+                    resource.title = scraped["title"]
+                content = scraped["content"] or ""
+            else:
+                content = ""
 
-            content = scraped["content"]
             if not content:
-                resource.summary = "Could not extract content from this URL."
-                await db.commit()
-                return
+                # Fall back to title + notes as content for tasks without a URL
+                content = " ".join(filter(None, [resource.title, resource.notes]))
+                if not content:
+                    resource.summary = "No content available."
+                    await db.commit()
+                    return
 
             # 2. Summarize
             resource.summary = await summarize_content(content, resource.title or "")

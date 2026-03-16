@@ -60,6 +60,16 @@ async def _process_resource(resource_id: str):
     await process_resource(resource_id)
 
 
+@router.post("/reprocess", status_code=202)
+async def reprocess_unembedded(background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
+    """Trigger re-processing for all resources that have no embedding."""
+    result = await db.execute(select(Resource).where(Resource.embedding.is_(None)))
+    resources = result.scalars().unique().all()
+    for r in resources:
+        background_tasks.add_task(_process_resource, str(r.id))
+    return {"queued": len(resources)}
+
+
 @router.get("", response_model=ResourceList)
 async def list_resources(
     page: int = Query(1, ge=1),

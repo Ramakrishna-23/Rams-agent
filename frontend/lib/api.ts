@@ -123,8 +123,8 @@ class ApiClient {
   }
 
   // Digest
-  async getDigest(): Promise<DigestItem[]> {
-    return this.request<DigestItem[]>("/api/digest");
+  async getDigest(): Promise<Resource[]> {
+    return this.request<Resource[]>("/api/digest");
   }
 
   // Reminders
