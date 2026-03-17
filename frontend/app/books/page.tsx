@@ -142,7 +142,7 @@ export default function BooksPage() {
   const addTag = (name: string) => {
     const trimmed = name.trim().toLowerCase();
     if (!trimmed || form.tags.some((t) => t.name === trimmed)) return;
-    setForm((f) => ({ ...f, tags: [...f.tags, { id: trimmed, name: trimmed }], tagInput: "" }));
+    setForm((f) => ({ ...f, tags: [...f.tags, { id: 0, name: trimmed }], tagInput: "" }));
   };
 
   const removeTag = (name: string) => {

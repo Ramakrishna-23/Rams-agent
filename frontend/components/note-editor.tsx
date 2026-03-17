@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Note, Tag } from "@/lib/types";
 import { Input } from "@/components/ui/input";
@@ -127,7 +127,7 @@ export function NoteEditor({ note, onSaved }: NoteEditorProps) {
   const addTag = (name: string) => {
     const trimmed = name.trim().toLowerCase();
     if (!trimmed || tags.some((t) => t.name === trimmed)) return;
-    const newTags = [...tags, { id: trimmed, name: trimmed }];
+    const newTags = [...tags, { id: 0, name: trimmed }];
     setTags(newTags);
     scheduleAutosave(title, content, newTags);
   };
