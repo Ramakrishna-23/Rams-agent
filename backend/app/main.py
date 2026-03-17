@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import resources, chat, search, reminders, digest, graph as graph_router
 from app.routers import subtasks, push, projects as projects_router
+from app.routers import notes as notes_router, books as books_router
 from app.graph import ensure_graph_schema, close_neo4j_driver
 
 
@@ -69,6 +70,8 @@ app.include_router(subtasks.router)
 app.include_router(push.router)
 app.include_router(projects_router.router)
 app.include_router(projects_router.router_comments)
+app.include_router(notes_router.router)
+app.include_router(books_router.router)
 
 
 @app.get("/health")

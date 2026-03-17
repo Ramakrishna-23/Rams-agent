@@ -11,6 +11,8 @@ import {
   ListTodo,
   Inbox,
   FolderKanban,
+  StickyNote,
+  Library,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -33,6 +35,8 @@ const navItems = [
   { title: "Actions", url: "/actions", icon: ListTodo },
   { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Resources", url: "/resources", icon: BookOpen },
+  { title: "Notes", url: "/notes", icon: StickyNote },
+  { title: "Books", url: "/books", icon: Library },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Digest", url: "/digest", icon: CalendarCheck },
 ];

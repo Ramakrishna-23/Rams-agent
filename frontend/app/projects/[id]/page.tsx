@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, useCallback, useRef, use } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { ProjectWithResources, Resource, Subtask } from "@/lib/types";
@@ -25,7 +25,209 @@ import {
   PlayCircle,
   CheckCircle2,
   ArchiveIcon,
+  Timer,
+  Square,
 } from "lucide-react";
+
+// ── Timer types ──────────────────────────────────────────────────────────────
+interface RecentTimer { focus_min: number; rest_min: number }
+type TimerPhase = "idle" | "focus" | "rest";
+
+function pad(n: number) { return n.toString().padStart(2, "0"); }
+function fmtCountdown(secs: number) {
+  return `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}`;
+}
+
+// ── Timer widget ─────────────────────────────────────────────────────────────
+function TimerWidget({ projectId }: { projectId: string }) {
+  const [focusMin, setFocusMin] = useState(25);
+  const [restMin, setRestMin] = useState(5);
+  const [phase, setPhase] = useState<TimerPhase>("idle");
+  const [remaining, setRemaining] = useState(0);
+  const [startedAt, setStartedAt] = useState<Date | null>(null);
+  const [logMsg, setLogMsg] = useState<string | null>(null);
+  const [recentTimers, setRecentTimers] = useState<RecentTimer[]>([]);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Load recent timers from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("recentTimers");
+      if (raw) setRecentTimers(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const saveRecent = (fm: number, rm: number) => {
+    const updated: RecentTimer[] = [
+      { focus_min: fm, rest_min: rm },
+      ...recentTimers.filter((t) => !(t.focus_min === fm && t.rest_min === rm)),
+    ].slice(0, 5);
+    setRecentTimers(updated);
+    localStorage.setItem("recentTimers", JSON.stringify(updated));
+  };
+
+  const clearInterval_ = () => {
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+  };
+
+  const logSession = useCallback(async (seconds: number, start: Date) => {
+    const ended = new Date();
+    try {
+      await api.logTimeSession(projectId, {
+        duration_seconds: seconds,
+        started_at: start.toISOString(),
+        ended_at: ended.toISOString(),
+      });
+      const mins = Math.round(seconds / 60);
+      setLogMsg(`Session logged ✓ — ${mins}m focus`);
+      setTimeout(() => setLogMsg(null), 4000);
+    } catch (err) {
+      console.error("Failed to log session:", err);
+    }
+  }, [projectId]);
+
+  const startRest = useCallback(() => {
+    setPhase("rest");
+    setRemaining(restMin * 60);
+    setStartedAt(null);
+    clearInterval_();
+    intervalRef.current = setInterval(() => {
+      setRemaining((r) => {
+        if (r <= 1) {
+          clearInterval_();
+          setPhase("idle");
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+  }, [restMin]);
+
+  const handleStart = () => {
+    if (phase !== "idle") return;
+    saveRecent(focusMin, restMin);
+    const secs = focusMin * 60;
+    setPhase("focus");
+    setRemaining(secs);
+    const now = new Date();
+    setStartedAt(now);
+    clearInterval_();
+    intervalRef.current = setInterval(() => {
+      setRemaining((r) => {
+        if (r <= 1) {
+          clearInterval_();
+          // Focus done naturally — log full session then start rest
+          logSession(secs, now);
+          startRest();
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+  };
+
+  const handleStop = () => {
+    if (phase === "idle") return;
+    clearInterval_();
+    if (phase === "focus" && startedAt) {
+      const elapsed = focusMin * 60 - remaining;
+      if (elapsed > 0) logSession(elapsed, startedAt);
+    }
+    setPhase("idle");
+    setRemaining(0);
+    setStartedAt(null);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => () => clearInterval_(), []);
+
+  const displaySecs = phase === "idle" ? focusMin * 60 : remaining;
+
+  return (
+    <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Timer className="size-4" />
+        Focus Timer
+      </div>
+
+      {/* Config inputs */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs text-muted-foreground whitespace-nowrap">Focus (min)</label>
+          <Input
+            type="number"
+            min={1}
+            value={focusMin}
+            onChange={(e) => setFocusMin(Math.max(1, parseInt(e.target.value) || 1))}
+            disabled={phase !== "idle"}
+            className="w-16 h-7 text-xs text-center"
+          />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs text-muted-foreground whitespace-nowrap">Rest (min)</label>
+          <Input
+            type="number"
+            min={0}
+            value={restMin}
+            onChange={(e) => setRestMin(Math.max(0, parseInt(e.target.value) || 0))}
+            disabled={phase !== "idle"}
+            className="w-16 h-7 text-xs text-center"
+          />
+        </div>
+      </div>
+
+      {/* Countdown display */}
+      <div className="flex items-center gap-4">
+        <div className={`text-3xl font-mono font-bold tabular-nums ${
+          phase === "focus" ? "text-blue-500" : phase === "rest" ? "text-emerald-500" : "text-foreground"
+        }`}>
+          {fmtCountdown(displaySecs)}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {phase === "idle" ? (
+            <Button size="sm" className="h-8 gap-1.5" onClick={handleStart}>
+              <PlayCircle className="size-4" />
+              Start
+            </Button>
+          ) : (
+            <Button size="sm" variant="destructive" className="h-8 gap-1.5" onClick={handleStop}>
+              <Square className="size-3.5" />
+              Stop
+            </Button>
+          )}
+          {phase !== "idle" && (
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+              phase === "focus" ? "bg-blue-500/10 text-blue-500" : "bg-emerald-500/10 text-emerald-500"
+            }`}>
+              {phase === "focus" ? "Focus" : "Rest"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Log message */}
+      {logMsg && (
+        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{logMsg}</p>
+      )}
+
+      {/* Recent timers */}
+      {recentTimers.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {recentTimers.map((t, i) => (
+            <button
+              key={i}
+              onClick={() => { setFocusMin(t.focus_min); setRestMin(t.rest_min); }}
+              disabled={phase !== "idle"}
+              className="text-[11px] px-2 py-0.5 rounded-full border bg-muted/50 hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {t.focus_min}m / {t.rest_min}m
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const columns = [
   { id: "about_to_do", title: "About to Do", icon: <Clock className="size-4" />, color: "border-t-sky-500" },
@@ -180,6 +382,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<PagePara
           )}
         </div>
       </div>
+
+      {/* Timer widget */}
+      <TimerWidget projectId={id} />
 
       {/* Toolbar */}
       <div className="flex items-center gap-3">

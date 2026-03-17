@@ -121,3 +121,15 @@ export function getChatSession(
 export function getDigest(): Promise<DigestItem[]> {
   return request<DigestItem[]>("/digest");
 }
+
+// Notes
+export function saveNote(
+  title: string,
+  content: string,
+  tag_names: string[]
+): Promise<{ id: string; title: string }> {
+  return request<{ id: string; title: string }>("/notes", {
+    method: "POST",
+    body: JSON.stringify({ title, content, tag_names }),
+  });
+}

@@ -53,6 +53,28 @@ class ResourceInProjectOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TimeSessionCreate(BaseModel):
+    duration_seconds: int
+    started_at: datetime
+    ended_at: datetime
+
+
+class TimeSessionOut(BaseModel):
+    id: UUID
+    project_id: UUID
+    duration_seconds: int
+    started_at: datetime
+    ended_at: datetime
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class TimeSessionsResponse(BaseModel):
+    sessions: list[TimeSessionOut]
+    total_seconds: int
+
+
 class ProjectOut(BaseModel):
     id: UUID
     name: str
@@ -60,6 +82,7 @@ class ProjectOut(BaseModel):
     color: str | None
     resource_count: int
     done_count: int
+    total_seconds: int = 0
     created_at: datetime
     updated_at: datetime
 

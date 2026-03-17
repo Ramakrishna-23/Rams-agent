@@ -26,6 +26,49 @@ export interface Project {
   color: string | null;
   resource_count: number;
   done_count: number;
+  total_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimeSession {
+  id: string;
+  project_id: string;
+  duration_seconds: number;
+  started_at: string;
+  ended_at: string;
+  created_at: string;
+}
+
+export interface TimeSessionsResponse {
+  sessions: TimeSession[];
+  total_seconds: number;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string | null;
+  tags: Tag[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string | null;
+  cover_url: string | null;
+  isbn: string | null;
+  genre: string | null;
+  status: "want_to_read" | "reading" | "finished";
+  total_chapters: number | null;
+  current_chapter: number | null;
+  rating: number | null;
+  notes: string | null;
+  tags: Tag[];
+  started_at: string | null;
+  finished_at: string | null;
   created_at: string;
   updated_at: string;
 }

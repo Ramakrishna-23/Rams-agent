@@ -25,7 +25,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FolderKanban, Plus, Pencil, Trash2 } from "lucide-react";
+import { FolderKanban, Plus, Pencil, Trash2, Clock } from "lucide-react";
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  if (hrs === 0) return `${mins} min`;
+  if (remMins === 0) return `${hrs} hr`;
+  return `${hrs} hr ${remMins} min`;
+}
 
 const COLOR_SWATCHES = [
   "#6497D6",
@@ -189,6 +199,12 @@ export default function ProjectsPage() {
                     value={project.resource_count > 0 ? (project.done_count / project.resource_count) * 100 : 0}
                     className="h-1.5"
                   />
+                  {project.total_seconds > 0 && (
+                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground pt-0.5">
+                      <Clock className="size-3" />
+                      {formatDuration(project.total_seconds)}
+                    </div>
+                  )}
                 </div>
               </div>
             </Link>

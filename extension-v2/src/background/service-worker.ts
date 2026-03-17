@@ -1,7 +1,15 @@
-import { createResource, updateResource } from "../shared/api-client";
+import { createResource, updateResource, saveNote } from "../shared/api-client";
 import { HAS_SIDE_PANEL } from "../shared/constants";
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.action === "saveNote") {
+    const { title, content, tagNames } = message.payload;
+    saveNote(title, content, tagNames)
+      .then((note) => sendResponse({ success: true, data: note }))
+      .catch((err: Error) => sendResponse({ success: false, error: err.message }));
+    return true; // async response
+  }
+
   if (message.action === "saveResource") {
     const { url, title, selectedText, notes, isAction, tags } = message.payload;
     createResource(url, title, notes, selectedText)

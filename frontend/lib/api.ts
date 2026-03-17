@@ -1,4 +1,4 @@
-import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem, Subtask, Project, ProjectWithResources, Comment } from "./types";
+import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem, Subtask, Project, ProjectWithResources, Comment, Note, Book, TimeSession, TimeSessionsResponse } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
@@ -199,6 +199,82 @@ class ApiClient {
 
   async deleteComment(commentId: string): Promise<void> {
     await this.request<void>(`/api/comments/${commentId}`, { method: "DELETE" });
+  }
+
+  // Notes
+  async getNotes(tag?: string): Promise<Note[]> {
+    const params = new URLSearchParams();
+    if (tag) params.set("tag", tag);
+    const qs = params.toString();
+    return this.request<Note[]>(`/api/notes${qs ? `?${qs}` : ""}`);
+  }
+
+  async getNote(id: string): Promise<Note> {
+    return this.request<Note>(`/api/notes/${id}`);
+  }
+
+  async createNote(data: { title?: string; content?: string; tag_names?: string[] }): Promise<Note> {
+    return this.request<Note>("/api/notes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateNote(id: string, data: { title?: string; content?: string; tag_names?: string[] }): Promise<Note> {
+    return this.request<Note>(`/api/notes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteNote(id: string): Promise<void> {
+    await this.request<void>(`/api/notes/${id}`, { method: "DELETE" });
+  }
+
+  // Books
+  async getBooks(status?: string, tag?: string): Promise<Book[]> {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (tag) params.set("tag", tag);
+    const qs = params.toString();
+    return this.request<Book[]>(`/api/books${qs ? `?${qs}` : ""}`);
+  }
+
+  async getBook(id: string): Promise<Book> {
+    return this.request<Book>(`/api/books/${id}`);
+  }
+
+  async createBook(data: Partial<Book> & { title: string; tag_names?: string[] }): Promise<Book> {
+    return this.request<Book>("/api/books", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBook(id: string, data: Partial<Book> & { tag_names?: string[] }): Promise<Book> {
+    return this.request<Book>(`/api/books/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBook(id: string): Promise<void> {
+    await this.request<void>(`/api/books/${id}`, { method: "DELETE" });
+  }
+
+  // Time sessions
+  async logTimeSession(
+    projectId: string,
+    data: { duration_seconds: number; started_at: string; ended_at: string }
+  ): Promise<TimeSession> {
+    return this.request<TimeSession>(`/api/projects/${projectId}/time-sessions`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getTimeSessions(projectId: string): Promise<TimeSessionsResponse> {
+    return this.request<TimeSessionsResponse>(`/api/projects/${projectId}/time-sessions`);
   }
 
   // Push notifications

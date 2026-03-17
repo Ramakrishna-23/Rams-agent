@@ -1,6 +1,7 @@
 import { initTheme } from "../shared/theme";
 import { initSaveTab } from "./components/save-tab";
 import { initActionsTab } from "./components/actions-tab";
+import { initNotesTab } from "./components/notes-tab";
 import "./popup.css";
 
 const tabs = document.querySelectorAll<HTMLButtonElement>(".tab");
@@ -38,4 +39,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initSaveTab();
   initActionsTab();
+  initNotesTab();
 });

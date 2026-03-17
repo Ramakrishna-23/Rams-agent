@@ -15,6 +15,9 @@ from app.models.resource import Resource, Tag, Subtask  # noqa: F401
 from app.models.chat import ChatSession, ChatMessage  # noqa: F401
 from app.models.reminder import Reminder  # noqa: F401
 from app.models.push_subscription import PushSubscription  # noqa: F401
+from app.models.note import Note  # noqa: F401
+from app.models.time_session import TimeSession  # noqa: F401
+from app.models.book import Book  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
