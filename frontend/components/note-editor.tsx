@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { Note, Tag } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { TagAutocompleteInput } from "@/components/tag-autocomplete-input";
 import { Eye, Pencil, X } from "lucide-react";
 
 interface NoteEditorProps {
@@ -159,16 +160,11 @@ export function NoteEditor({ note, onSaved }: NoteEditorProps) {
             </button>
           </span>
         ))}
-        <input
+        <TagAutocompleteInput
           value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === ",") {
-              e.preventDefault();
-              addTag(tagInput);
-              setTagInput("");
-            }
-          }}
+          onChange={setTagInput}
+          onSelect={(name) => { addTag(name); setTagInput(""); }}
+          excludeTags={tags.map((t) => t.name)}
           placeholder="Add tag..."
           className="text-xs bg-transparent outline-none placeholder:text-muted-foreground min-w-[80px]"
         />

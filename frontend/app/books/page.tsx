@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Library, Plus, Star, Trash2, Pencil, X, Search } from "lucide-react";
+import { TagAutocompleteInput } from "@/components/tag-autocomplete-input";
 
 type BookStatus = "want_to_read" | "reading" | "finished";
 
@@ -463,15 +464,11 @@ export default function BooksPage() {
                       </button>
                     </span>
                   ))}
-                  <input
+                  <TagAutocompleteInput
                     value={form.tagInput}
-                    onChange={(e) => setForm((f) => ({ ...f, tagInput: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === ",") {
-                        e.preventDefault();
-                        addTag(form.tagInput);
-                      }
-                    }}
+                    onChange={(v) => setForm((f) => ({ ...f, tagInput: v }))}
+                    onSelect={(name) => { addTag(name); setForm((f) => ({ ...f, tagInput: "" })); }}
+                    excludeTags={form.tags.map((t) => t.name)}
                     placeholder="Add tag..."
                     className="text-xs bg-transparent outline-none placeholder:text-muted-foreground min-w-[80px]"
                   />

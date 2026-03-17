@@ -5,8 +5,8 @@ import { Resource } from "@/lib/types";
 import { useResources } from "@/hooks/useResources";
 import { ResourceCard } from "@/components/resource-card";
 import { ResourceDetailPanel } from "@/components/resource-detail-panel";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { TagAutocompleteInput } from "@/components/tag-autocomplete-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -58,13 +58,11 @@ export default function ResourcesPage() {
 
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Input
-          placeholder="Filter by tag..."
+        <TagAutocompleteInput
           value={tag || ""}
-          onChange={(e) => {
-            setTag(e.target.value || undefined);
-            setPage(1);
-          }}
+          onChange={(v) => { setTag(v || undefined); setPage(1); }}
+          onSelect={(name) => { setTag(name); setPage(1); }}
+          placeholder="Filter by tag..."
           className="sm:max-w-[200px]"
         />
         <Select
