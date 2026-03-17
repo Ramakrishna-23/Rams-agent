@@ -46,6 +46,14 @@ class BookUpdate(BaseModel):
     tag_names: Optional[List[str]] = None
 
 
+class BookLookupOut(BaseModel):
+    title: str | None = None
+    author: str | None = None
+    cover_url: str | None = None
+    isbn: str | None = None
+    description: str | None = None
+
+
 class BookOut(BaseModel):
     id: UUID
     title: str

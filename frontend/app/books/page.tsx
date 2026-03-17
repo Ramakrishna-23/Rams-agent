@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Library, Plus, Star, Trash2, Pencil, X } from "lucide-react";
+import { Library, Plus, Star, Trash2, Pencil, X, Search } from "lucide-react";
 
 type BookStatus = "want_to_read" | "reading" | "finished";
 
@@ -100,6 +100,9 @@ export default function BooksPage() {
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
   const [form, setForm] = useState<BookFormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
+  const [lookupUrl, setLookupUrl] = useState("");
+  const [looking, setLooking] = useState(false);
+  const [lookupError, setLookupError] = useState("");
 
   const fetchBooks = async () => {
     try {
@@ -117,7 +120,28 @@ export default function BooksPage() {
   const openCreate = () => {
     setEditingBook(null);
     setForm(DEFAULT_FORM);
+    setLookupUrl("");
+    setLookupError("");
     setDialogOpen(true);
+  };
+
+  const handleLookup = async () => {
+    if (!lookupUrl.trim()) return;
+    setLooking(true);
+    setLookupError("");
+    try {
+      const data = await api.lookupBook(lookupUrl.trim());
+      setForm((f) => ({
+        ...f,
+        title: data.title ?? f.title,
+        author: data.author ?? f.author,
+        isbn: data.isbn ?? f.isbn,
+      }));
+    } catch {
+      setLookupError("Could not fetch book info from that URL.");
+    } finally {
+      setLooking(false);
+    }
   };
 
   const openEdit = (e: React.MouseEvent, book: Book) => {
@@ -332,6 +356,30 @@ export default function BooksPage() {
             <DialogTitle>{editingBook ? "Edit Book" : "Add Book"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {!editingBook && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Auto-fill from URL</label>
+                <div className="flex gap-2">
+                  <Input
+                    value={lookupUrl}
+                    onChange={(e) => setLookupUrl(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleLookup(); }}
+                    placeholder="Paste Amazon or Goodreads URL..."
+                    className="flex-1 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLookup}
+                    disabled={looking || !lookupUrl.trim()}
+                  >
+                    {looking ? "..." : <><Search className="size-3.5 mr-1" />Lookup</>}
+                  </Button>
+                </div>
+                {lookupError && <p className="text-xs text-destructive">{lookupError}</p>}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Title *</label>

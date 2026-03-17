@@ -262,6 +262,10 @@ class ApiClient {
     await this.request<void>(`/api/books/${id}`, { method: "DELETE" });
   }
 
+  async lookupBook(url: string): Promise<{ title?: string; author?: string; cover_url?: string; isbn?: string; description?: string }> {
+    return this.request(`/api/books/lookup?url=${encodeURIComponent(url)}`);
+  }
+
   // Time sessions
   async logTimeSession(
     projectId: string,

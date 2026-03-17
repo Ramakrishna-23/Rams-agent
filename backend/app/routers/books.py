@@ -11,7 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.book import Book
 from app.models.resource import Tag
-from app.schemas.book import BookCreate, BookOut, BookUpdate
+from app.schemas.book import BookCreate, BookLookupOut, BookOut, BookUpdate
+from app.services.book_lookup import lookup_book_from_url
 from app.utils.auth import verify_api_key
 
 router = APIRouter(prefix="/api/books", tags=["books"], dependencies=[Depends(verify_api_key)])
@@ -84,6 +85,15 @@ async def create_book(data: BookCreate, db: AsyncSession = Depends(get_db)):
     await db.flush()
     await db.refresh(book)
     return book
+
+
+@router.get("/lookup", response_model=BookLookupOut)
+async def lookup_book(url: str):
+    try:
+        data = await lookup_book_from_url(url)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch URL: {exc}")
+    return data
 
 
 @router.get("/{book_id}", response_model=BookOut)
