@@ -2,6 +2,7 @@ import { initTheme } from "../shared/theme";
 import { initSaveTab } from "./components/save-tab";
 import { initActionsTab } from "./components/actions-tab";
 import { initNotesTab } from "./components/notes-tab";
+import { initTimerTab } from "./components/timer-tab";
 import "./popup.css";
 
 const tabs = document.querySelectorAll<HTMLButtonElement>(".tab");
@@ -21,6 +22,12 @@ tabs.forEach((tab) => {
   });
 });
 
+// Notes button
+document.getElementById("notesBtn")?.addEventListener("click", async () => {
+  const win = await chrome.windows.getCurrent();
+  chrome.runtime.sendMessage({ action: "openNotesPanel", windowId: win.id });
+});
+
 // Chat button
 document.getElementById("chatBtn")?.addEventListener("click", async () => {
   const win = await chrome.windows.getCurrent();
@@ -38,6 +45,7 @@ document.getElementById("settingsBtn")?.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initSaveTab();
+  initTimerTab();
   initActionsTab();
   initNotesTab();
 });

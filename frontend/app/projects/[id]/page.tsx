@@ -37,6 +37,12 @@ function pad(n: number) { return n.toString().padStart(2, "0"); }
 function fmtCountdown(secs: number) {
   return `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}`;
 }
+function fmtTotal(secs: number) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  if (h === 0) return `${m}min${m !== 1 ? "s" : ""}`;
+  return `${h}hr ${m}min${m !== 1 ? "s" : ""}`;
+}
 
 // ── Timer widget ─────────────────────────────────────────────────────────────
 function TimerWidget({ projectId }: { projectId: string }) {
@@ -47,15 +53,21 @@ function TimerWidget({ projectId }: { projectId: string }) {
   const [startedAt, setStartedAt] = useState<Date | null>(null);
   const [logMsg, setLogMsg] = useState<string | null>(null);
   const [recentTimers, setRecentTimers] = useState<RecentTimer[]>([]);
+  const [totalFocusedSecs, setTotalFocusedSecs] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const totalKey = `totalFocusedSecs_${projectId}`;
 
-  // Load recent timers from localStorage
+  // Load recent timers and total focused time from localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem("recentTimers");
       if (raw) setRecentTimers(JSON.parse(raw));
     } catch { /* ignore */ }
-  }, []);
+    try {
+      const storedTotal = localStorage.getItem(totalKey);
+      if (storedTotal) setTotalFocusedSecs(parseInt(storedTotal, 10));
+    } catch { /* ignore */ }
+  }, [totalKey]);
 
   const saveRecent = (fm: number, rm: number) => {
     const updated: RecentTimer[] = [
@@ -72,6 +84,12 @@ function TimerWidget({ projectId }: { projectId: string }) {
 
   const logSession = useCallback(async (seconds: number, start: Date) => {
     const ended = new Date();
+    // Accumulate total focused time
+    setTotalFocusedSecs((prev) => {
+      const next = prev + seconds;
+      try { localStorage.setItem(totalKey, String(next)); } catch { /* ignore */ }
+      return next;
+    });
     try {
       await api.logTimeSession(projectId, {
         duration_seconds: seconds,
@@ -84,7 +102,7 @@ function TimerWidget({ projectId }: { projectId: string }) {
     } catch (err) {
       console.error("Failed to log session:", err);
     }
-  }, [projectId]);
+  }, [projectId, totalKey]);
 
   const startRest = useCallback(() => {
     setPhase("rest");
@@ -145,9 +163,18 @@ function TimerWidget({ projectId }: { projectId: string }) {
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Timer className="size-4" />
-        Focus Timer
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Timer className="size-4" />
+          Focus Timer
+        </div>
+        {totalFocusedSecs > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock className="size-3.5" />
+            <span className="font-medium text-foreground">{fmtTotal(totalFocusedSecs)}</span>
+            <span>Total Focused Time</span>
+          </div>
+        )}
       </div>
 
       {/* Config inputs */}
