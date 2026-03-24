@@ -168,13 +168,11 @@ function TimerWidget({ projectId }: { projectId: string }) {
           <Timer className="size-4" />
           Focus Timer
         </div>
-        {totalFocusedSecs > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="size-3.5" />
-            <span className="font-medium text-foreground">{fmtTotal(totalFocusedSecs)}</span>
-            <span>Total Focused Time</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clock className="size-3.5" />
+          <span className="font-medium text-foreground">{fmtTotal(totalFocusedSecs)}</span>
+          <span>Total Focused Time</span>
+        </div>
       </div>
 
       {/* Config inputs */}
