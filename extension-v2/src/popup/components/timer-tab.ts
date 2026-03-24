@@ -37,7 +37,7 @@ function fmtTotal(secs: number): string {
 
 function getSettings(): Promise<{ apiUrl: string; apiKey: string }> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(["apiUrl", "apiKey"], (result) => {
+    chrome.storage.sync.get(["apiUrl", "apiKey"], (result) => {
       resolve({
         apiUrl: (result.apiUrl as string) || "http://localhost:8000",
         apiKey: (result.apiKey as string) || "",
