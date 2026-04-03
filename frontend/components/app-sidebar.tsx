@@ -13,6 +13,7 @@ import {
   FolderKanban,
   StickyNote,
   Library,
+  Mic2,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -38,6 +39,7 @@ const navItems = [
   { title: "Notes", url: "/notes", icon: StickyNote },
   { title: "Books", url: "/books", icon: Library },
   { title: "Chat", url: "/chat", icon: MessageSquare },
+  { title: "Voice", url: "/voice", icon: Mic2 },
   { title: "Digest", url: "/digest", icon: CalendarCheck },
 ];
 

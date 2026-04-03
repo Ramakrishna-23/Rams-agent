@@ -29,8 +29,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true; // async response
   }
 
+  if (message.action === "openNotesPanel") {
+    if (HAS_SIDE_PANEL) {
+      chrome.sidePanel.setOptions({ path: "notespanel/notespanel.html", enabled: true });
+      chrome.sidePanel.open({ windowId: message.windowId }).catch(console.error);
+    } else {
+      chrome.tabs.create({ url: chrome.runtime.getURL("notespanel/notespanel.html") });
+    }
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (message.action === "openSidePanel") {
     if (HAS_SIDE_PANEL) {
+      chrome.sidePanel.setOptions({ path: "sidepanel/sidepanel.html", enabled: true });
       chrome.sidePanel
         .open({ windowId: message.windowId })
         .catch(console.error);

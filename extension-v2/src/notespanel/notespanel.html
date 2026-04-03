@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rams Agent - Notes</title>
+  <link rel="stylesheet" href="notespanel.css" />
+</head>
+<body>
+  <div class="notes-layout">
+    <header class="notes-header">
+      <h2>Notes</h2>
+      <span id="autosave-status" class="autosave-status"></span>
+    </header>
+    <div class="notes-body">
+      <input id="note-title" type="text" class="note-title" placeholder="Note title" />
+      <textarea id="note-content" class="note-content" placeholder="Write your note..."></textarea>
+      <div class="tags-label">Tags</div>
+      <div id="tags-container" class="tags-input-container">
+        <div id="tags-chips" class="tags-chips"></div>
+        <input id="tag-input" type="text" class="tag-input" placeholder="Type and press Enter..." />
+      </div>
+    </div>
+    <div class="notes-footer">
+      <div id="send-status" class="send-status hidden"></div>
+      <button id="send-btn" class="send-btn">Send to Rams</button>
+    </div>
+  </div>
+
+  <script src="notespanel.js"></script>
+</body>
+</html>

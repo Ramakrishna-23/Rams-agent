@@ -8,6 +8,7 @@ module.exports = {
     content: "./src/content/content-script.ts",
     popup: "./src/popup/popup.ts",
     sidepanel: "./src/sidepanel/sidepanel.ts",
+    notespanel: "./src/notespanel/notespanel.ts",
     options: "./src/options/options.ts",
   },
   output: {
@@ -41,6 +42,7 @@ module.exports = {
         { from: "icons", to: "icons" },
         { from: "src/popup/popup.html", to: "popup/popup.html" },
         { from: "src/sidepanel/sidepanel.html", to: "sidepanel/sidepanel.html" },
+        { from: "src/notespanel/notespanel.html", to: "notespanel/notespanel.html" },
         { from: "src/options/options.html", to: "options/options.html" },
         { from: "fonts", to: "fonts" },
       ],

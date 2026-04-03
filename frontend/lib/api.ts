@@ -300,6 +300,29 @@ class ApiClient {
     const res = await this.request<{ public_key: string }>("/api/push/vapid-public-key");
     return res.public_key;
   }
+
+  // Voice
+  async voiceStream(message: string, sessionId?: string): Promise<Response> {
+    const body: Record<string, string> = { message };
+    if (sessionId) body.session_id = sessionId;
+
+    const res = await fetch(`${this.baseUrl}/api/voice/stream`, {
+      method: "POST",
+      headers: this.headers(),
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Voice error ${res.status}: ${text}`);
+    }
+
+    return res;
+  }
+
+  async clearVoiceSession(sessionId: string): Promise<void> {
+    await this.request<void>(`/api/voice/sessions/${sessionId}`, { method: "DELETE" });
+  }
 }
 
 export const api = new ApiClient();

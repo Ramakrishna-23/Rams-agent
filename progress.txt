@@ -1,0 +1,132 @@
+Rams Agent - Project Progress
+==============================
+Last updated: 2026-03-14
+
+COMMIT HISTORY (oldest to newest)
+==================================
+
+1. fea9200 - Initial commit: Rams Agent full-stack application
+   - Backend (FastAPI), frontend (Next.js), Chrome extension, Docker setup
+   - AI-powered resource management and chat agent
+
+2. 7612734 - Major frontend rewrite with shadcn UI, graph service, extension v2, GCP deployment
+   - Rebuilt frontend with shadcn/ui components, pnpm, app router
+   - Added knowledge graph service with Neo4j integration
+   - Added browser extension v2 (popup, sidepanel, options)
+   - Added GCP Cloud Run deployment scripts and CI/CD
+   - Added action status tracking in backend
+
+3. 96d603a - Migrate deployment from GCP Cloud Run to Railway
+   - Added backend/start.sh for migration + server startup
+   - Added frontend/railway.toml for NEXT_PUBLIC_* build args
+   - Fixed frontend Dockerfile: ensure public/ dir exists before build
+   - Replaced GCP deploy workflow with CI-only lint/typecheck workflow
+   - Updated DEPLOY.md with Railway deployment guide
+
+4. 0bef60f - Handle Neo4j connection failure gracefully on startup
+   - App no longer crashes if Neo4j AuraDB is paused or has auth issues
+   - Logs error and continues without graph features
+
+5. e897ed5 - Add passcode gate to frontend
+   - 6-digit PIN screen blocks access to the app
+   - Session persists for 7 days in localStorage
+
+6. 825b3fc - Fix frontend API paths: add /api prefix to all endpoints
+   - Frontend was calling without /api prefix, causing 404s
+
+7. 218c6e0 - Add New Action button to Actions page and Dashboard
+   - New Action dialog with URL, title, and notes fields
+   - Creates resource with status "about_to_do"
+
+8. c4d85aa - Add Notion-style detail panel with tags management
+   - Redesigned resource detail panel with property rows
+   - Inline tag editor: add existing tags, create new, remove
+   - Added GET /api/tags endpoint
+
+9. e05d446 - Add vim-style keyboard shortcuts (dd/aa) and widen detail panel
+   - Double-tap dd -> Dashboard, aa -> Actions (300ms window)
+   - Widened detail panel from 460px to 50vw
+
+10. fbe55ab - Style Add Resource card: constrain width, add title label
+    - Aligned card width to kanban columns
+    - Added centered bold "Add Resource" title
+
+11. aae53e6 - Add PWA save space, inbox feature, and extension improvements
+    - Added inbox status with nullable URL support (backend + migration)
+    - Added PWA manifest with share_target for iOS/Android
+    - Added /save page as share sheet target
+    - Added /inbox page with triage UI
+    - Added Save/Chat toggle to chat page
+    - Updated extension: editable title/URL, tags input, action toggle
+
+12. bd600f9 - Add service worker for PWA share target support on iOS
+    - iOS requires a registered service worker for share_target
+
+13. 377f3fa - Add /api/quick-save endpoint for Apple Shortcuts integration
+    - GET endpoint with API key as query param
+    - Designed for iOS automation
+
+14. c70e552 - Add enhanced task management + push notifications
+    - Added due_at, priority, recurrence_rule columns to resources
+    - Created subtasks table with CRUD API endpoints
+    - Created push_subscriptions table for web push
+    - Added recurring task logic: auto-creates next occurrence when done
+    - Added VAPID-based web push with background notification loop
+    - Frontend: priority/due date/recurrence/subtasks UI in detail panel
+    - Kanban sorts by priority then due date
+
+15. 268b9a9 - Fix Dockerfile to use start.sh and fix TS build error in notification toggle
+    - Dockerfile: run migrations via start.sh instead of raw uvicorn
+    - notification-toggle: cast Uint8Array to ArrayBuffer for applicationServerKey
+
+16. 2a10d9e - Add railway.toml for backend build and deploy config
+    - Explicit Dockerfile path, health check, restart policy
+
+
+FEATURE STATUS
+==============
+
+[COMPLETE] Core CRUD (resources, tags)
+[COMPLETE] AI Processing Pipeline (scrape, summarize, tag, embed via Gemini)
+[COMPLETE] Hybrid Search (fulltext + semantic + Reciprocal Rank Fusion)
+[COMPLETE] RAG Chat (SSE streaming, multi-session, citations)
+[COMPLETE] Kanban Boards (Reading: 4 columns, Actions: 5 columns)
+[COMPLETE] Knowledge Graph (Neo4j - related resources, path finding, concepts)
+[COMPLETE] PWA (share target, installable on iOS/Android)
+[COMPLETE] Chrome Extension v2 (save, search, digest, chat sidepanel)
+[COMPLETE] Push Notifications (VAPID, reminders, due tasks, overdue reviews)
+[COMPLETE] Spaced Repetition (review intervals, digest page)
+[COMPLETE] Task Management (subtasks, priority, due dates, recurrence)
+[COMPLETE] Inbox Triage (quick route to Reading or Actions)
+[COMPLETE] Apple Shortcuts Integration (GET-based quick-save)
+[COMPLETE] Railway Deployment (auto-deploy, Cloudflare DNS)
+[COMPLETE] Passcode Gate (frontend auth)
+[COMPLETE] API Key Auth (backend)
+[BASIC]    CI/CD (lint only - ESLint + ruff check, no tests)
+[MISSING]  Tests (zero test files in backend or frontend)
+[MISSING]  README.md (no project README at root)
+[MISSING]  S3 / Object Storage (planned for screenshots/PDFs later)
+[MISSING]  Multi-user Auth (currently single-user with passcode + API key)
+
+
+PRODUCTION STATUS
+=================
+
+Frontend:  https://rams.rambuilds.dev       (Railway, Next.js 16)
+Backend:   https://api-rams.rambuilds.dev   (Railway, FastAPI)
+Database:  Railway PostgreSQL with pgvector (13 resources, migrated)
+Neo4j:     AuraDB free tier (paused - non-fatal, graph features disabled)
+Extension: Chrome extension v2 (load unpacked from extension-v2/dist)
+
+Cost: ~$9-16/month (Railway Hobby Plan + compute + PostgreSQL)
+
+
+TECH STACK
+==========
+
+Frontend:  Next.js 16 + React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui
+Backend:   Python 3.12 + FastAPI + SQLAlchemy 2.0 (async) + Alembic
+Database:  PostgreSQL with pgvector (768-dim embeddings)
+Graph DB:  Neo4j AuraDB (optional)
+AI:        Google Gemini 2.5-Flash + Gemini Embedding-001
+Deploy:    Docker + Railway + Cloudflare DNS
