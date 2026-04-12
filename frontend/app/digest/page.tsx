@@ -18,7 +18,7 @@ import {
 export default function DigestPage() {
   const [items, setItems] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reviewing, setReviewing] = useState<number | null>(null);
+  const [reviewing, setReviewing] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDigest = async () => {
@@ -34,7 +34,7 @@ export default function DigestPage() {
     fetchDigest();
   }, []);
 
-  const handleReview = async (resourceId: number) => {
+  const handleReview = async (resourceId: string) => {
     setReviewing(resourceId);
     try {
       await api.reviewResource(resourceId);

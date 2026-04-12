@@ -1,31 +1,10 @@
 "use client";
 
 import { Resource, PRIORITY_COLORS } from "@/lib/types";
+import { extractDomain, STATUS_COLORS, STATUS_LABELS } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Clock, Repeat, CheckSquare } from "lucide-react";
-
-const statusColors: Record<string, string> = {
-  inbox: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  unread: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  read: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  archived: "bg-muted text-muted-foreground",
-  favorite: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  about_to_do: "bg-sky-500/10 text-sky-500 border-sky-500/20",
-  lets_do: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  doing: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  done: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  archive: "bg-muted text-muted-foreground",
-};
-
-const statusLabels: Record<string, string> = {
-  inbox: "Inbox",
-  about_to_do: "about to do",
-  lets_do: "let's do",
-  doing: "doing",
-  done: "done",
-  archive: "archive",
-};
 
 const tagColors = [
   "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -50,14 +29,7 @@ export function ResourceCard({
   projectName,
   projectColor,
 }: ResourceCardProps) {
-  const domain = (() => {
-    if (!resource.url) return "Note";
-    try {
-      return new URL(resource.url).hostname.replace("www.", "");
-    } catch {
-      return resource.url;
-    }
-  })();
+  const domain = extractDomain(resource.url);
 
   const isOverdue = resource.due_at && new Date(resource.due_at) < new Date() && !["done", "archive"].includes(resource.status);
   const subtasks = resource.subtasks || [];
@@ -82,9 +54,9 @@ export function ResourceCard({
               )}
               <Badge
                 variant="outline"
-                className={`text-[10px] ${statusColors[resource.status] || ""}`}
+                className={`text-[10px] ${STATUS_COLORS[resource.status] || ""}`}
               >
-                {statusLabels[resource.status] || resource.status}
+                {STATUS_LABELS[resource.status] || resource.status}
               </Badge>
             </div>
           </div>

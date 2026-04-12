@@ -19,6 +19,7 @@ from app.schemas.resource import (
 )
 from app.config import get_settings
 from app.utils.auth import verify_api_key
+from app.utils.tags import resolve_tags
 
 router = APIRouter(prefix="/api/resources", tags=["resources"], dependencies=[Depends(verify_api_key)])
 router_tags = APIRouter(prefix="/api/tags", tags=["tags"], dependencies=[Depends(verify_api_key)])
@@ -128,22 +129,12 @@ async def update_resource(
         setattr(resource, field, value)
 
     if tag_names is not None:
-        resolved_tags = []
-        for name in tag_names:
-            result2 = await db.execute(select(Tag).where(Tag.name == name))
-            tag = result2.scalar_one_or_none()
-            if not tag:
-                tag = Tag(name=name)
-                db.add(tag)
-                await db.flush()
-            resolved_tags.append(tag)
-        resource.tags = resolved_tags
+        resource.tags = await resolve_tags(db, tag_names)
 
     # Recurring task logic: when moved to "done" and has recurrence_rule
     new_status = update_data.get("status")
     if new_status == "done" and old_status != "done" and resource.recurrence_rule:
         next_due = _calculate_next_due(resource.due_at, resource.recurrence_rule)
-        # Copy tag names before creating new resource
         copy_tag_names = [t.name for t in resource.tags]
         new_resource = Resource(
             title=resource.title,
@@ -156,15 +147,8 @@ async def update_resource(
         )
         db.add(new_resource)
         await db.flush()
-        # Copy tags to new resource
         if copy_tag_names:
-            new_tags = []
-            for name in copy_tag_names:
-                tag_result = await db.execute(select(Tag).where(Tag.name == name))
-                tag_obj = tag_result.scalar_one_or_none()
-                if tag_obj:
-                    new_tags.append(tag_obj)
-            new_resource.tags = new_tags
+            new_resource.tags = await resolve_tags(db, copy_tag_names)
 
     await db.flush()
     await db.refresh(resource)
@@ -211,8 +195,6 @@ async def delete_resource(resource_id: uuid.UUID, db: AsyncSession = Depends(get
 @router.post("/{resource_id}/review", response_model=ResourceOut)
 async def review_resource(resource_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Mark a resource as reviewed and advance spaced repetition."""
-    from app.config import get_settings
-
     result = await db.execute(select(Resource).where(Resource.id == resource_id))
     resource = result.scalar_one_or_none()
     if not resource:

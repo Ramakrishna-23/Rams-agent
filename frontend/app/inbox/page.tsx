@@ -41,7 +41,7 @@ export default function InboxPage() {
     fetchInbox();
   }, [fetchInbox]);
 
-  const handleCategorize = async (id: number, status: "unread" | "about_to_do") => {
+  const handleCategorize = async (id: string, status: "unread" | "about_to_do") => {
     try {
       await api.updateResource(id, { status });
       setResources((prev) => prev.filter((r) => r.id !== id));

@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 """Background resource processing — scrape, summarize, tag, embed."""
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from app.database import async_session
-from app.models.resource import Resource, Tag
+from app.models.resource import Resource
 from app.services.scraper import scrape_url
 from app.services.gemini import summarize_content, generate_tags, extract_concepts
 from app.services.embeddings import generate_embedding
 from app.services.graph_service import sync_resource_to_graph, compute_resource_relationships
+from app.utils.tags import resolve_tags
 
 
 async def process_resource(resource_id: str):
@@ -43,13 +44,8 @@ async def process_resource(resource_id: str):
 
             # 3. Generate tags
             tag_names = await generate_tags(content, resource.title or "")
-            for tag_name in tag_names:
-                tag_result = await db.execute(select(Tag).where(Tag.name == tag_name))
-                tag = tag_result.scalar_one_or_none()
-                if not tag:
-                    tag = Tag(name=tag_name)
-                    db.add(tag)
-                    await db.flush()
+            resolved = await resolve_tags(db, tag_names)
+            for tag in resolved:
                 resource.tags.append(tag)
 
             # 4. Generate embedding
@@ -58,7 +54,6 @@ async def process_resource(resource_id: str):
 
             # 5. Update search vector
             search_content = f"{resource.title or ''} {resource.summary or ''} {content[:4000]}"
-            from sqlalchemy import update
             await db.execute(
                 update(Resource)
                 .where(Resource.id == resource_id)

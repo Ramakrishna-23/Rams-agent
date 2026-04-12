@@ -1,11 +1,5 @@
+"""Voice API router — text-in / text-out voice interaction endpoint."""
 from __future__ import annotations
-
-"""Voice API router — text-in / text-out voice interaction endpoint.
-
-The frontend handles WebSpeech API for STT/TTS in the browser.
-This endpoint receives the transcribed text and returns the voice agent's
-spoken response via SSE streaming so the UI can stream TTS as tokens arrive.
-"""
 
 import uuid
 from collections.abc import AsyncGenerator

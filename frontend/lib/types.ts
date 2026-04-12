@@ -1,5 +1,5 @@
 export interface Tag {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -78,7 +78,7 @@ export interface ProjectWithResources extends Project {
 }
 
 export interface Resource {
-  id: number;
+  id: string;
   url: string | null;
   title: string;
   summary: string;
@@ -123,7 +123,7 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  resource_ids: number[];
+  resource_ids: string[];
   created_at: string;
 }
 
@@ -140,7 +140,7 @@ export interface DigestItem {
 }
 
 export interface SearchResult {
-  id: number;
+  id: string;
   title: string;
   url: string;
   summary: string;

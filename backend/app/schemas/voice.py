@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Pydantic schemas for the Voice API."""
+from __future__ import annotations
 
 from pydantic import BaseModel
 
