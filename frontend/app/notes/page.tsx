@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { Note } from "@/lib/types";
 import { NoteEditor } from "@/components/note-editor";
 import { Button } from "@/components/ui/button";
-import { StickyNote, Plus, Trash2 } from "lucide-react";
+import { StickyNote, Plus, Trash2, ArrowLeft } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,8 +88,8 @@ export default function NotesPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0 -m-6 overflow-hidden">
-      {/* Left panel — note list */}
-      <div className="w-72 shrink-0 flex flex-col border-r bg-card/50 overflow-hidden">
+      {/* Left panel — note list (hidden on mobile when a note is selected) */}
+      <div className={`w-full md:w-72 shrink-0 flex flex-col border-r bg-card/50 overflow-hidden ${selectedId ? "hidden md:flex" : "flex"}`}>
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h1 className="text-sm font-semibold">Notes</h1>
           <Button size="sm" variant="ghost" className="h-7 px-2 gap-1" onClick={handleNew}>
@@ -150,10 +150,21 @@ export default function NotesPage() {
         </div>
       </div>
 
-      {/* Right panel — editor */}
-      <div className="flex-1 overflow-hidden p-6">
+      {/* Right panel — editor (full-width on mobile when a note is selected) */}
+      <div className={`flex-1 overflow-hidden p-4 md:p-6 ${selectedId ? "flex flex-col" : "hidden md:flex md:flex-col"}`}>
         {selectedNote ? (
-          <NoteEditor key={selectedNote.id} note={selectedNote} onSaved={handleSaved} />
+          <>
+            <button
+              onClick={() => setSelectedId(null)}
+              className="mb-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground md:hidden"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to notes
+            </button>
+            <div className="flex-1 overflow-hidden">
+              <NoteEditor key={selectedNote.id} note={selectedNote} onSaved={handleSaved} />
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <StickyNote className="size-12 text-muted-foreground/30 mb-4" />

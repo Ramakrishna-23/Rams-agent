@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -28,13 +29,23 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { api } from "@/lib/api";
 
-const navItems = [
-  { title: "Inbox", url: "/inbox", icon: Inbox },
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Actions", url: "/actions", icon: ListTodo },
+interface NavItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  countKey?: keyof typeof _defaultCounts;
+}
+
+const _defaultCounts = { inbox: 0, read: 0, doing: 0 };
+
+const navItems: NavItem[] = [
+  { title: "Inbox", url: "/inbox", icon: Inbox, countKey: "inbox" },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, countKey: "read" },
+  { title: "Actions", url: "/actions", icon: ListTodo, countKey: "doing" },
   { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Notes", url: "/notes", icon: StickyNote },
@@ -47,7 +58,15 @@ const navItems = [
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const [counts, setCounts] = useState({ inbox: 0, read: 0, doing: 0 });
+  const { setOpenMobile, isMobile } = useSidebar();
+  const [counts, setCounts] = useState(_defaultCounts);
+
+  // Auto-close sidebar on navigation (mobile)
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [pathname, isMobile, setOpenMobile]);
 
   useEffect(() => {
     Promise.all([
@@ -97,19 +116,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <Link href={item.url}>
                     <item.icon />
                     <span>{item.title}</span>
-                    {item.title === "Inbox" && counts.inbox > 0 && (
+                    {item.countKey && counts[item.countKey] > 0 && (
                       <span className="ml-auto text-xs font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center group-data-[collapsible=icon]:hidden">
-                        {counts.inbox}
-                      </span>
-                    )}
-                    {item.title === "Dashboard" && counts.read > 0 && (
-                      <span className="ml-auto text-xs font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center group-data-[collapsible=icon]:hidden">
-                        {counts.read}
-                      </span>
-                    )}
-                    {item.title === "Actions" && counts.doing > 0 && (
-                      <span className="ml-auto text-xs font-medium bg-primary/10 text-primary rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center group-data-[collapsible=icon]:hidden">
-                        {counts.doing}
+                        {counts[item.countKey]}
                       </span>
                     )}
                   </Link>
