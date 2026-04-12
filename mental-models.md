@@ -1,3 +1,4 @@
+
 # mental-models.rambuilds.dev — full design document
 
 > A personal knowledge system for learning, practising, and applying mental models daily.

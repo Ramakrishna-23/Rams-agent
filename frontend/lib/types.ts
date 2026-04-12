@@ -165,3 +165,86 @@ export function isActionResource(resource: Resource): boolean {
 export function isInboxResource(resource: Resource): boolean {
   return resource.status === "inbox";
 }
+
+// ── Mental Models ────────────────────────────────────────────────────────────
+
+export interface PracticeSession {
+  id: string;
+  model_slug: string;
+  scenario_type: string;
+  user_response: string | null;
+  logged: boolean;
+  created_at: string;
+}
+
+export interface DecisionLog {
+  id: string;
+  practice_session_id: string | null;
+  model_slugs: string[];
+  entry_type: string;
+  domain: string | null;
+  summary: string | null;
+  verdict: string | null;
+  note: string | null;
+  tags: string[];
+  revisit_at: string | null;
+  outcome: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardStats {
+  current_streak: number;
+  best_streak: number;
+  total_sessions: number;
+  models_used: number;
+  decisions_logged: number;
+  revisits_due: number;
+  sessions_by_date: Record<string, number>;
+  model_usage: Record<string, number>;
+}
+
+export interface MentalModelRealExample {
+  type: "business" | "personal" | "historical";
+  title: string;
+  description: string;
+}
+
+export interface MentalModelScenario {
+  prompt: string;
+  question: string;
+  insight: string;
+  category: "business" | "personal" | "historical";
+}
+
+export interface MentalModelRelatedRef {
+  slug: string;
+  type: "combines_with" | "contrasts_with" | "prerequisite_for";
+}
+
+export interface MentalModelRecord {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  author: string;
+  era: string;
+  source_book: string;
+  theory: string;
+  metaphor: string;
+  key_question: string;
+  field: string[];
+  domain: string[];
+  real_examples: MentalModelRealExample[];
+  self_check_questions: string[];
+  related_models: MentalModelRelatedRef[];
+  scenarios: MentalModelScenario[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type MentalModelCreateInput = Omit<
+  MentalModelRecord,
+  "id" | "created_at" | "updated_at"
+>;
+

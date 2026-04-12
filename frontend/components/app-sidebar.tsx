@@ -14,6 +14,7 @@ import {
   StickyNote,
   Library,
   Mic2,
+  Brain,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -40,6 +41,7 @@ const navItems = [
   { title: "Books", url: "/books", icon: Library },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Voice", url: "/voice", icon: Mic2 },
+  { title: "Mental Models", url: "/mental-models", icon: Brain },
   { title: "Digest", url: "/digest", icon: CalendarCheck },
 ];
 

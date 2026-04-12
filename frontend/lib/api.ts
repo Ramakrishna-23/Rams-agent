@@ -323,6 +323,98 @@ class ApiClient {
   async clearVoiceSession(sessionId: string): Promise<void> {
     await this.request<void>(`/api/voice/sessions/${sessionId}`, { method: "DELETE" });
   }
+
+  // Mental Models
+  async createPracticeSession(data: {
+    model_slug: string;
+    scenario_type?: string;
+    user_response?: string;
+  }): Promise<import("./types").PracticeSession> {
+    return this.request("/api/mental-models/practice/session", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPracticeSessions(limit = 30): Promise<import("./types").PracticeSession[]> {
+    return this.request(`/api/mental-models/practice/sessions?limit=${limit}`);
+  }
+
+  async getDecisionLog(options?: { entry_type?: string; domain?: string; limit?: number }): Promise<import("./types").DecisionLog[]> {
+    const params = new URLSearchParams();
+    if (options?.entry_type) params.set("entry_type", options.entry_type);
+    if (options?.domain) params.set("domain", options.domain);
+    if (options?.limit) params.set("limit", String(options.limit));
+    const qs = params.toString();
+    return this.request(`/api/mental-models/decision-log${qs ? `?${qs}` : ""}`);
+  }
+
+  async createDecisionLog(data: {
+    practice_session_id?: string;
+    model_slugs?: string[];
+    entry_type?: string;
+    domain?: string;
+    summary?: string;
+    verdict?: string;
+    note?: string;
+    tags?: string[];
+    revisit_at?: string;
+  }): Promise<import("./types").DecisionLog> {
+    return this.request("/api/mental-models/decision-log", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateDecisionLog(
+    id: string,
+    data: Partial<import("./types").DecisionLog>
+  ): Promise<import("./types").DecisionLog> {
+    return this.request(`/api/mental-models/decision-log/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDecisionLog(id: string): Promise<void> {
+    await this.request<void>(`/api/mental-models/decision-log/${id}`, { method: "DELETE" });
+  }
+
+  async getDashboardStats(): Promise<import("./types").DashboardStats> {
+    return this.request("/api/mental-models/dashboard");
+  }
+
+  async listMentalModels(): Promise<import("./types").MentalModelRecord[]> {
+    return this.request("/api/mental-models/models");
+  }
+
+  async getMentalModelRecord(slug: string): Promise<import("./types").MentalModelRecord> {
+    return this.request(`/api/mental-models/models/${slug}`);
+  }
+
+  async createMentalModel(
+    data: import("./types").MentalModelCreateInput
+  ): Promise<import("./types").MentalModelRecord> {
+    return this.request("/api/mental-models/models", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateMentalModel(
+    slug: string,
+    data: Partial<import("./types").MentalModelCreateInput>
+  ): Promise<import("./types").MentalModelRecord> {
+    return this.request(`/api/mental-models/models/${slug}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteMentalModel(slug: string): Promise<void> {
+    await this.request<void>(`/api/mental-models/models/${slug}`, { method: "DELETE" });
+  }
+
 }
 
 export const api = new ApiClient();

@@ -7,10 +7,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import resources, chat, search, reminders, digest, graph as graph_router
-from app.routers import subtasks, push, projects as projects_router
-from app.routers import notes as notes_router, books as books_router
-from app.routers import voice as voice_router
+from app.routers import (
+    books,
+    chat,
+    digest,
+    graph,
+    mental_models,
+    notes,
+    projects,
+    push,
+    reminders,
+    resources,
+    search,
+    subtasks,
+    voice,
+)
 from app.graph import ensure_graph_schema, close_neo4j_driver
 
 
@@ -66,14 +77,15 @@ app.include_router(chat.router)
 app.include_router(search.router)
 app.include_router(reminders.router)
 app.include_router(digest.router)
-app.include_router(graph_router.router)
+app.include_router(graph.router)
 app.include_router(subtasks.router)
 app.include_router(push.router)
-app.include_router(projects_router.router)
-app.include_router(projects_router.router_comments)
-app.include_router(notes_router.router)
-app.include_router(books_router.router)
-app.include_router(voice_router.router)
+app.include_router(projects.router)
+app.include_router(projects.router_comments)
+app.include_router(notes.router)
+app.include_router(books.router)
+app.include_router(voice.router)
+app.include_router(mental_models.router)
 
 
 @app.get("/health")
