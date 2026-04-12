@@ -128,7 +128,7 @@ export function NoteEditor({ note, onSaved }: NoteEditorProps) {
   const addTag = (name: string) => {
     const trimmed = name.trim().toLowerCase();
     if (!trimmed || tags.some((t) => t.name === trimmed)) return;
-    const newTags = [...tags, { id: 0, name: trimmed }];
+    const newTags = [...tags, { id: `temp-${Date.now()}`, name: trimmed }];
     setTags(newTags);
     scheduleAutosave(title, content, newTags);
   };

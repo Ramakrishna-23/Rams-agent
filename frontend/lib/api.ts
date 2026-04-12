@@ -1,4 +1,24 @@
-import { Resource, ResourceList, Tag, ChatSession, ChatMessage, SearchResult, DigestItem, Subtask, Project, ProjectWithResources, Comment, Note, Book, TimeSession, TimeSessionsResponse } from "./types";
+import type {
+  Book,
+  ChatMessage,
+  ChatSession,
+  Comment,
+  DashboardStats,
+  DecisionLog,
+  MentalModelCreateInput,
+  MentalModelRecord,
+  Note,
+  PracticeSession,
+  Project,
+  ProjectWithResources,
+  Resource,
+  ResourceList,
+  SearchResult,
+  Subtask,
+  Tag,
+  TimeSession,
+  TimeSessionsResponse,
+} from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
@@ -45,7 +65,7 @@ class ApiClient {
     return this.request<ResourceList>(`/api/resources?${params}`);
   }
 
-  async getResource(id: number): Promise<Resource> {
+  async getResource(id: string): Promise<Resource> {
     return this.request<Resource>(`/api/resources/${id}`);
   }
 
@@ -61,18 +81,18 @@ class ApiClient {
     return this.updateResource(resource.id, { status: "about_to_do" });
   }
 
-  async updateResource(id: number, data: Partial<Resource>): Promise<Resource> {
+  async updateResource(id: string, data: Partial<Resource>): Promise<Resource> {
     return this.request<Resource>(`/api/resources/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
   }
 
-  async deleteResource(id: number): Promise<void> {
+  async deleteResource(id: string): Promise<void> {
     await this.request<void>(`/api/resources/${id}`, { method: "DELETE" });
   }
 
-  async reviewResource(id: number): Promise<Resource> {
+  async reviewResource(id: string): Promise<Resource> {
     return this.request<Resource>(`/api/resources/${id}/review`, { method: "POST" });
   }
 
@@ -81,7 +101,7 @@ class ApiClient {
     return this.request<Tag[]>("/api/tags");
   }
 
-  async updateResourceTags(id: number, tagNames: string[]): Promise<Resource> {
+  async updateResourceTags(id: string, tagNames: string[]): Promise<Resource> {
     return this.request<Resource>(`/api/resources/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ tags: tagNames }),
@@ -128,19 +148,19 @@ class ApiClient {
   }
 
   // Reminders
-  async createReminder(resourceId: number, remindAt: string): Promise<{ id: number }> {
-    return this.request<{ id: number }>("/api/reminders", {
+  async createReminder(resourceId: string, remindAt: string): Promise<{ id: string }> {
+    return this.request<{ id: string }>("/api/reminders", {
       method: "POST",
       body: JSON.stringify({ resource_id: resourceId, remind_at: remindAt }),
     });
   }
 
-  async deleteReminder(id: number): Promise<void> {
+  async deleteReminder(id: string): Promise<void> {
     await this.request<void>(`/api/reminders/${id}`, { method: "DELETE" });
   }
 
   // Subtasks
-  async createSubtask(resourceId: number, title: string, sortOrder = 0): Promise<Subtask> {
+  async createSubtask(resourceId: string, title: string, sortOrder = 0): Promise<Subtask> {
     return this.request<Subtask>(`/api/resources/${resourceId}/subtasks`, {
       method: "POST",
       body: JSON.stringify({ title, sort_order: sortOrder }),
@@ -190,7 +210,7 @@ class ApiClient {
     return this.request<Comment[]>(`/api/resources/${resourceId}/comments`);
   }
 
-  async createComment(resourceId: string | number, content: string): Promise<Comment> {
+  async createComment(resourceId: string, content: string): Promise<Comment> {
     return this.request<Comment>(`/api/resources/${resourceId}/comments`, {
       method: "POST",
       body: JSON.stringify({ content }),
@@ -329,18 +349,18 @@ class ApiClient {
     model_slug: string;
     scenario_type?: string;
     user_response?: string;
-  }): Promise<import("./types").PracticeSession> {
+  }): Promise<PracticeSession> {
     return this.request("/api/mental-models/practice/session", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async getPracticeSessions(limit = 30): Promise<import("./types").PracticeSession[]> {
+  async getPracticeSessions(limit = 30): Promise<PracticeSession[]> {
     return this.request(`/api/mental-models/practice/sessions?limit=${limit}`);
   }
 
-  async getDecisionLog(options?: { entry_type?: string; domain?: string; limit?: number }): Promise<import("./types").DecisionLog[]> {
+  async getDecisionLog(options?: { entry_type?: string; domain?: string; limit?: number }): Promise<DecisionLog[]> {
     const params = new URLSearchParams();
     if (options?.entry_type) params.set("entry_type", options.entry_type);
     if (options?.domain) params.set("domain", options.domain);
@@ -359,7 +379,7 @@ class ApiClient {
     note?: string;
     tags?: string[];
     revisit_at?: string;
-  }): Promise<import("./types").DecisionLog> {
+  }): Promise<DecisionLog> {
     return this.request("/api/mental-models/decision-log", {
       method: "POST",
       body: JSON.stringify(data),
@@ -368,8 +388,8 @@ class ApiClient {
 
   async updateDecisionLog(
     id: string,
-    data: Partial<import("./types").DecisionLog>
-  ): Promise<import("./types").DecisionLog> {
+    data: Partial<DecisionLog>
+  ): Promise<DecisionLog> {
     return this.request(`/api/mental-models/decision-log/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -380,21 +400,21 @@ class ApiClient {
     await this.request<void>(`/api/mental-models/decision-log/${id}`, { method: "DELETE" });
   }
 
-  async getDashboardStats(): Promise<import("./types").DashboardStats> {
+  async getDashboardStats(): Promise<DashboardStats> {
     return this.request("/api/mental-models/dashboard");
   }
 
-  async listMentalModels(): Promise<import("./types").MentalModelRecord[]> {
+  async listMentalModels(): Promise<MentalModelRecord[]> {
     return this.request("/api/mental-models/models");
   }
 
-  async getMentalModelRecord(slug: string): Promise<import("./types").MentalModelRecord> {
+  async getMentalModelRecord(slug: string): Promise<MentalModelRecord> {
     return this.request(`/api/mental-models/models/${slug}`);
   }
 
   async createMentalModel(
-    data: import("./types").MentalModelCreateInput
-  ): Promise<import("./types").MentalModelRecord> {
+    data: MentalModelCreateInput
+  ): Promise<MentalModelRecord> {
     return this.request("/api/mental-models/models", {
       method: "POST",
       body: JSON.stringify(data),
@@ -403,8 +423,8 @@ class ApiClient {
 
   async updateMentalModel(
     slug: string,
-    data: Partial<import("./types").MentalModelCreateInput>
-  ): Promise<import("./types").MentalModelRecord> {
+    data: Partial<MentalModelCreateInput>
+  ): Promise<MentalModelRecord> {
     return this.request(`/api/mental-models/models/${slug}`, {
       method: "PATCH",
       body: JSON.stringify(data),

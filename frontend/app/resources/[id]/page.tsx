@@ -56,7 +56,7 @@ export default function ResourceDetailPage({
   useEffect(() => {
     const fetchResource = async () => {
       try {
-        const data = await api.getResource(Number(id));
+        const data = await api.getResource(id);
         setResource(data);
         setNotes(data.notes || "");
       } catch (err) {

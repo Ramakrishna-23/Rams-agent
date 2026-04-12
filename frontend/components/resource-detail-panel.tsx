@@ -56,19 +56,7 @@ import {
   CheckSquare,
   FolderKanban,
 } from "lucide-react";
-
-const statusLabels: Record<string, string> = {
-  inbox: "Inbox",
-  unread: "Unread",
-  read: "Read",
-  favorite: "Favorite",
-  archived: "Archived",
-  about_to_do: "About to Do",
-  lets_do: "Let's Do",
-  doing: "Doing",
-  done: "Done",
-  archive: "Archive",
-};
+import { extractDomain, STATUS_LABELS } from "@/lib/utils";
 
 interface ResourceDetailPanelProps {
   resource: Resource | null;
@@ -285,14 +273,7 @@ export function ResourceDetailPanel({
       t.name.toLowerCase().includes(tagSearch.toLowerCase())
   );
 
-  const domain = (() => {
-    if (!resource.url) return "Note";
-    try {
-      return new URL(resource.url).hostname.replace("www.", "");
-    } catch {
-      return resource.url;
-    }
-  })();
+  const domain = extractDomain(resource.url);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -339,7 +320,7 @@ export function ResourceDetailPanel({
                     <SelectContent>
                       {statuses.map((s) => (
                         <SelectItem key={s} value={s}>
-                          {statusLabels[s] || s}
+                          {STATUS_LABELS[s] || s}
                         </SelectItem>
                       ))}
                     </SelectContent>
