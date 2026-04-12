@@ -1,36 +1,30 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel
 
-
-class TagOut(BaseModel):
-    id: UUID
-    name: str
-
-    model_config = {"from_attributes": True}
+from app.schemas.resource import TagOut
 
 
 class NoteCreate(BaseModel):
     title: str = "Untitled"
-    content: Optional[str] = None
-    tag_names: List[str] = []
+    content: str | None = None
+    tag_names: list[str] = []
 
 
 class NoteUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    tag_names: Optional[List[str]] = None
+    title: str | None = None
+    content: str | None = None
+    tag_names: list[str] | None = None
 
 
 class NoteOut(BaseModel):
     id: UUID
     title: str
-    content: Optional[str] = None
-    tags: List[TagOut] = []
+    content: str | None = None
+    tags: list[TagOut] = []
     created_at: datetime
     updated_at: datetime
 

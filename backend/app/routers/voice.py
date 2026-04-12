@@ -8,7 +8,7 @@ spoken response via SSE streaming so the UI can stream TTS as tokens arrive.
 """
 
 import uuid
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, Depends
 from sse_starlette.sse import EventSourceResponse

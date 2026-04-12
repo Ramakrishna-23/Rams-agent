@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -37,12 +37,12 @@ class MentalModelBase(BaseModel):
     theory: str = ""
     metaphor: str = ""
     key_question: str = ""
-    field: List[str] = Field(default_factory=list)
-    domain: List[str] = Field(default_factory=list)
-    real_examples: List[RealExampleIn] = Field(default_factory=list)
-    self_check_questions: List[str] = Field(default_factory=list)
-    related_models: List[RelatedModelIn] = Field(default_factory=list)
-    scenarios: List[ScenarioIn] = Field(default_factory=list)
+    field: list[str] = Field(default_factory=list)
+    domain: list[str] = Field(default_factory=list)
+    real_examples: list[RealExampleIn] = Field(default_factory=list)
+    self_check_questions: list[str] = Field(default_factory=list)
+    related_models: list[RelatedModelIn] = Field(default_factory=list)
+    scenarios: list[ScenarioIn] = Field(default_factory=list)
 
 
 class MentalModelCreate(MentalModelBase):
@@ -50,20 +50,20 @@ class MentalModelCreate(MentalModelBase):
 
 
 class MentalModelUpdate(BaseModel):
-    name: Optional[str] = None
-    tagline: Optional[str] = None
-    author: Optional[str] = None
-    era: Optional[str] = None
-    source_book: Optional[str] = None
-    theory: Optional[str] = None
-    metaphor: Optional[str] = None
-    key_question: Optional[str] = None
-    field: Optional[List[str]] = None
-    domain: Optional[List[str]] = None
-    real_examples: Optional[List[RealExampleIn]] = None
-    self_check_questions: Optional[List[str]] = None
-    related_models: Optional[List[RelatedModelIn]] = None
-    scenarios: Optional[List[ScenarioIn]] = None
+    name: str | None = None
+    tagline: str | None = None
+    author: str | None = None
+    era: str | None = None
+    source_book: str | None = None
+    theory: str | None = None
+    metaphor: str | None = None
+    key_question: str | None = None
+    field: list[str] | None = None
+    domain: list[str] | None = None
+    real_examples: list[RealExampleIn] | None = None
+    self_check_questions: list[str] | None = None
+    related_models: list[RelatedModelIn] | None = None
+    scenarios: list[ScenarioIn] | None = None
 
 
 class MentalModelOut(MentalModelBase):
@@ -79,14 +79,14 @@ class MentalModelOut(MentalModelBase):
 class PracticeSessionCreate(BaseModel):
     model_slug: str
     scenario_type: str = "curated"
-    user_response: Optional[str] = None
+    user_response: str | None = None
 
 
 class PracticeSessionOut(BaseModel):
     id: uuid.UUID
     model_slug: str
     scenario_type: str
-    user_response: Optional[str]
+    user_response: str | None
     logged: bool
     created_at: datetime
 
@@ -96,40 +96,40 @@ class PracticeSessionOut(BaseModel):
 # ── Decision Log ─────────────────────────────────────────────────────────────
 
 class DecisionLogCreate(BaseModel):
-    practice_session_id: Optional[uuid.UUID] = None
-    model_slugs: List[str] = []
+    practice_session_id: uuid.UUID | None = None
+    model_slugs: list[str] = []
     entry_type: str = "curated"
-    domain: Optional[str] = None
-    summary: Optional[str] = None
-    verdict: Optional[str] = None
-    note: Optional[str] = None
-    tags: List[str] = []
-    revisit_at: Optional[datetime] = None
+    domain: str | None = None
+    summary: str | None = None
+    verdict: str | None = None
+    note: str | None = None
+    tags: list[str] = []
+    revisit_at: datetime | None = None
 
 
 class DecisionLogUpdate(BaseModel):
-    model_slugs: Optional[List[str]] = None
-    domain: Optional[str] = None
-    summary: Optional[str] = None
-    verdict: Optional[str] = None
-    note: Optional[str] = None
-    tags: Optional[List[str]] = None
-    revisit_at: Optional[datetime] = None
-    outcome: Optional[str] = None
+    model_slugs: list[str] | None = None
+    domain: str | None = None
+    summary: str | None = None
+    verdict: str | None = None
+    note: str | None = None
+    tags: list[str] | None = None
+    revisit_at: datetime | None = None
+    outcome: str | None = None
 
 
 class DecisionLogOut(BaseModel):
     id: uuid.UUID
-    practice_session_id: Optional[uuid.UUID]
-    model_slugs: List[str]
+    practice_session_id: uuid.UUID | None
+    model_slugs: list[str]
     entry_type: str
-    domain: Optional[str]
-    summary: Optional[str]
-    verdict: Optional[str]
-    note: Optional[str]
-    tags: List[str]
-    revisit_at: Optional[datetime]
-    outcome: Optional[str]
+    domain: str | None
+    summary: str | None
+    verdict: str | None
+    note: str | None
+    tags: list[str]
+    revisit_at: datetime | None
+    outcome: str | None
     created_at: datetime
     updated_at: datetime
 

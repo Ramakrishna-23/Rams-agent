@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,24 +13,12 @@ from app.models.resource import Tag
 from app.schemas.book import BookCreate, BookLookupOut, BookOut, BookUpdate
 from app.services.book_lookup import lookup_book_from_url
 from app.utils.auth import verify_api_key
+from app.utils.tags import resolve_tags
 
 router = APIRouter(prefix="/api/books", tags=["books"], dependencies=[Depends(verify_api_key)])
 
 
-async def _resolve_tags(db: AsyncSession, tag_names: list[str]) -> list[Tag]:
-    resolved = []
-    for name in tag_names:
-        result = await db.execute(select(Tag).where(Tag.name == name))
-        tag = result.scalar_one_or_none()
-        if not tag:
-            tag = Tag(name=name)
-            db.add(tag)
-            await db.flush()
-        resolved.append(tag)
-    return resolved
-
-
-async def _fetch_cover_url(isbn: str) -> Optional[str]:
+async def _fetch_cover_url(isbn: str) -> str | None:
     url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
     try:
         async with httpx.AsyncClient(timeout=5) as client:
@@ -45,8 +32,8 @@ async def _fetch_cover_url(isbn: str) -> Optional[str]:
 
 @router.get("", response_model=list[BookOut])
 async def list_books(
-    status: Optional[str] = None,
-    tag: Optional[str] = None,
+    status: str | None = None,
+    tag: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     q = select(Book)
@@ -80,7 +67,7 @@ async def create_book(data: BookCreate, db: AsyncSession = Depends(get_db)):
         finished_at=data.finished_at,
     )
     if data.tag_names:
-        book.tags = await _resolve_tags(db, data.tag_names)
+        book.tags = await resolve_tags(db, data.tag_names)
     db.add(book)
     await db.flush()
     await db.refresh(book)
@@ -123,7 +110,7 @@ async def update_book(book_id: uuid.UUID, data: BookUpdate, db: AsyncSession = D
         setattr(book, field, value)
 
     if tag_names is not None:
-        book.tags = await _resolve_tags(db, tag_names)
+        book.tags = await resolve_tags(db, tag_names)
 
     await db.flush()
     await db.refresh(book)

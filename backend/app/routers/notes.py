@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -12,25 +11,13 @@ from app.models.note import Note
 from app.models.resource import Tag
 from app.schemas.note import NoteCreate, NoteOut, NoteUpdate
 from app.utils.auth import verify_api_key
+from app.utils.tags import resolve_tags
 
 router = APIRouter(prefix="/api/notes", tags=["notes"], dependencies=[Depends(verify_api_key)])
 
 
-async def _resolve_tags(db: AsyncSession, tag_names: list[str]) -> list[Tag]:
-    resolved = []
-    for name in tag_names:
-        result = await db.execute(select(Tag).where(Tag.name == name))
-        tag = result.scalar_one_or_none()
-        if not tag:
-            tag = Tag(name=name)
-            db.add(tag)
-            await db.flush()
-        resolved.append(tag)
-    return resolved
-
-
 @router.get("", response_model=list[NoteOut])
-async def list_notes(tag: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+async def list_notes(tag: str | None = None, db: AsyncSession = Depends(get_db)):
     q = select(Note)
     if tag:
         q = q.join(Note.tags).where(Tag.name == tag)
@@ -42,7 +29,7 @@ async def list_notes(tag: Optional[str] = None, db: AsyncSession = Depends(get_d
 async def create_note(data: NoteCreate, db: AsyncSession = Depends(get_db)):
     note = Note(id=uuid.uuid4(), title=data.title, content=data.content)
     if data.tag_names:
-        note.tags = await _resolve_tags(db, data.tag_names)
+        note.tags = await resolve_tags(db, data.tag_names)
     db.add(note)
     await db.flush()
     await db.refresh(note)
@@ -71,7 +58,7 @@ async def update_note(note_id: uuid.UUID, data: NoteUpdate, db: AsyncSession = D
         setattr(note, field, value)
 
     if tag_names is not None:
-        note.tags = await _resolve_tags(db, tag_names)
+        note.tags = await resolve_tags(db, tag_names)
 
     await db.flush()
     await db.refresh(note)

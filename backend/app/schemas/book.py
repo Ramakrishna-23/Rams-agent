@@ -1,49 +1,43 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel
 
-
-class TagOut(BaseModel):
-    id: UUID
-    name: str
-
-    model_config = {"from_attributes": True}
+from app.schemas.resource import TagOut
 
 
 class BookCreate(BaseModel):
     title: str
-    author: Optional[str] = None
-    cover_url: Optional[str] = None
-    isbn: Optional[str] = None
-    genre: Optional[str] = None
+    author: str | None = None
+    cover_url: str | None = None
+    isbn: str | None = None
+    genre: str | None = None
     status: str = "want_to_read"
-    total_chapters: Optional[int] = None
-    current_chapter: Optional[int] = None
-    rating: Optional[int] = None
-    notes: Optional[str] = None
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
-    tag_names: List[str] = []
+    total_chapters: int | None = None
+    current_chapter: int | None = None
+    rating: int | None = None
+    notes: str | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    tag_names: list[str] = []
 
 
 class BookUpdate(BaseModel):
-    title: Optional[str] = None
-    author: Optional[str] = None
-    cover_url: Optional[str] = None
-    isbn: Optional[str] = None
-    genre: Optional[str] = None
-    status: Optional[str] = None
-    total_chapters: Optional[int] = None
-    current_chapter: Optional[int] = None
-    rating: Optional[int] = None
-    notes: Optional[str] = None
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
-    tag_names: Optional[List[str]] = None
+    title: str | None = None
+    author: str | None = None
+    cover_url: str | None = None
+    isbn: str | None = None
+    genre: str | None = None
+    status: str | None = None
+    total_chapters: int | None = None
+    current_chapter: int | None = None
+    rating: int | None = None
+    notes: str | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    tag_names: list[str] | None = None
 
 
 class BookLookupOut(BaseModel):
@@ -57,18 +51,18 @@ class BookLookupOut(BaseModel):
 class BookOut(BaseModel):
     id: UUID
     title: str
-    author: Optional[str] = None
-    cover_url: Optional[str] = None
-    isbn: Optional[str] = None
-    genre: Optional[str] = None
+    author: str | None = None
+    cover_url: str | None = None
+    isbn: str | None = None
+    genre: str | None = None
     status: str
-    total_chapters: Optional[int] = None
-    current_chapter: Optional[int] = None
-    rating: Optional[int] = None
-    notes: Optional[str] = None
-    tags: List[TagOut] = []
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
+    total_chapters: int | None = None
+    current_chapter: int | None = None
+    rating: int | None = None
+    notes: str | None = None
+    tags: list[TagOut] = []
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 """Background resource processing — scrape, summarize, tag, embed."""
-from sqlalchemy import select, text as sa_text, func
+from sqlalchemy import func, select
 
 from app.database import async_session
-from app.models.resource import Resource, Tag, resource_tags
+from app.models.resource import Resource, Tag
 from app.services.scraper import scrape_url
 from app.services.gemini import summarize_content, generate_tags, extract_concepts
 from app.services.embeddings import generate_embedding
@@ -58,8 +58,6 @@ async def process_resource(resource_id: str):
 
             # 5. Update search vector
             search_content = f"{resource.title or ''} {resource.summary or ''} {content[:4000]}"
-            from sqlalchemy import cast, String
-            from sqlalchemy.dialects.postgresql import TSVECTOR
             from sqlalchemy import update
             await db.execute(
                 update(Resource)

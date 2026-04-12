@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
@@ -58,7 +57,7 @@ def _serialize_model(entry: MentalModel) -> dict:
     }
 
 
-@router.get("/models", response_model=List[MentalModelOut])
+@router.get("/models", response_model=list[MentalModelOut])
 async def list_mental_models(db: AsyncSession = Depends(get_db)):
     """List all stored mental models."""
     result = await db.execute(select(MentalModel).order_by(MentalModel.created_at.asc()))
@@ -163,7 +162,7 @@ async def create_practice_session(
     return session
 
 
-@router.get("/practice/sessions", response_model=List[PracticeSessionOut])
+@router.get("/practice/sessions", response_model=list[PracticeSessionOut])
 async def list_practice_sessions(
     limit: int = 30,
     db: AsyncSession = Depends(get_db),
@@ -179,10 +178,10 @@ async def list_practice_sessions(
 
 # ── Decision Log ──────────────────────────────────────────────────────────────
 
-@router.get("/decision-log", response_model=List[DecisionLogOut])
+@router.get("/decision-log", response_model=list[DecisionLogOut])
 async def list_decision_log(
-    entry_type: Optional[str] = None,
-    domain: Optional[str] = None,
+    entry_type: str | None = None,
+    domain: str | None = None,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
 ):
